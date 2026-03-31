@@ -1,4 +1,4 @@
-# Validated Documentation
+# Stable Documentation
 
 This directory contains documentation for patches that were tested and accepted for the stable branch.
 

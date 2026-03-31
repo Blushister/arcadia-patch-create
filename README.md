@@ -28,7 +28,7 @@ The compiled jar is generated in `build/libs/`.
 
 - `src/main/java` - mod sources
 - `src/main/resources` - NeoForge and Mixin metadata
-- `docs/validated` - approved reports and test procedures
+- `docs/stable` - approved reports and test procedures
 - `docs/research` - investigation material, only on `dev`
 
 ## Validation policy
