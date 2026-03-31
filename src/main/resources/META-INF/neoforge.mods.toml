@@ -3,7 +3,7 @@ loaderVersion = "[4,)"
 license = "MIT"
 
 [[mixins]]
-    config = "mekanism_patch.mixins.json"
+    config = "arcadia_patch_create.mixins.json"
 
 [[mods]]
     modId = "arcadia_patch_create"

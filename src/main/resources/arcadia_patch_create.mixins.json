@@ -1,7 +1,7 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "fr.arcadia.mekanismpatch.mixin",
+  "package": "fr.arcadia.arcadiapatchcreate.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [],
   "server": [
