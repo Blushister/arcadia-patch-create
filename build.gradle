@@ -35,7 +35,7 @@ java {
 tasks.named('jar') {
     manifest {
         attributes([
-            'MixinConfigs': 'mekanism_patch.mixins.json'
+            'MixinConfigs': 'arcadia_patch_create.mixins.json'
         ])
     }
 }

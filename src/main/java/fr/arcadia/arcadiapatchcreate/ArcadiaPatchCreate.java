@@ -1,4 +1,4 @@
-package fr.arcadia.mekanismpatch;
+package fr.arcadia.arcadiapatchcreate;
 
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;

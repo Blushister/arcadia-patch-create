@@ -1,4 +1,4 @@
-package fr.arcadia.mekanismpatch.mixin;
+package fr.arcadia.arcadiapatchcreate.mixin;
 
 import java.util.List;
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,7 +22,7 @@ public abstract class MixinBeltInventory {
     private List<?> toRemove;
 
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true, remap = false)
-    private void mekanismPatch$skipEmptyBeltTick(CallbackInfo ci) {
+    private void arcadiaPatchCreate$skipEmptyBeltTick(CallbackInfo ci) {
         // Empty belts still reach the server tick path even though there is no transport work to perform.
         if (items.isEmpty() && toInsert.isEmpty() && toRemove.isEmpty()) {
             ci.cancel();

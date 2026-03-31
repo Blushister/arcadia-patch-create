@@ -337,7 +337,7 @@ abstract class MixinBeltInventory {
     @Shadow final List&lt;TransportedItemStack&gt; toRemove;
 
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
-    private void mekanismPatch$skipCompletelyEmptyBelt(CallbackInfo ci) {
+    private void arcadiaPatchCreate$skipCompletelyEmptyBelt(CallbackInfo ci) {
         if (items.isEmpty() &amp;&amp; toInsert.isEmpty() &amp;&amp; toRemove.isEmpty()) {
             ci.cancel();
         }
@@ -371,7 +371,7 @@ abstract class MixinFluidTransportBehaviour {
     @Shadow public FluidTransportBehaviour.UpdatePhase phase;
 
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
-    private void mekanismPatch$skipTrulyIdlePipe(CallbackInfo ci) {
+    private void arcadiaPatchCreate$skipTrulyIdlePipe(CallbackInfo ci) {
         if (phase != FluidTransportBehaviour.UpdatePhase.IDLE || interfaces == null || interfaces.isEmpty()) {
             return;
         }
@@ -400,18 +400,18 @@ abstract class MixinFluidTransportBehaviour {
       <pre><code class="language-java">@Mixin(value = FunnelBlockEntity.class, remap = false)
 abstract class MixinFunnelBlockEntity {
 
-    @Unique private int mekanismPatch$failedExtractBackoff;
+    @Unique private int arcadiaPatchCreate$failedExtractBackoff;
 
     @Inject(method = "tick", at = @At("HEAD"))
-    private void mekanismPatch$decayBackoff(CallbackInfo ci) {
-        if (mekanismPatch$failedExtractBackoff &gt; 0) {
-            mekanismPatch$failedExtractBackoff--;
+    private void arcadiaPatchCreate$decayBackoff(CallbackInfo ci) {
+        if (arcadiaPatchCreate$failedExtractBackoff &gt; 0) {
+            arcadiaPatchCreate$failedExtractBackoff--;
         }
     }
 
     @Inject(method = "activateExtractor", at = @At("HEAD"), cancellable = true)
-    private void mekanismPatch$skipRepeatedFailedExtracts(CallbackInfo ci) {
-        if (mekanismPatch$failedExtractBackoff &gt; 0) {
+    private void arcadiaPatchCreate$skipRepeatedFailedExtracts(CallbackInfo ci) {
+        if (arcadiaPatchCreate$failedExtractBackoff &gt; 0) {
             ci.cancel();
         }
     }
@@ -469,7 +469,7 @@ abstract class MixinFunnelBlockEntity {
 abstract class MixinDisplayLinkBlockEntity {
 
     @Inject(method = "updateGatheredData", at = @At("HEAD"), cancellable = true)
-    private void mekanismPatch$skipFactoryGaugeWithoutPanels(CallbackInfo ci) {
+    private void arcadiaPatchCreate$skipFactoryGaugeWithoutPanels(CallbackInfo ci) {
         if (activeSource instanceof FactoryGaugeDisplaySource
             &amp;&amp; factoryPanelSupport.getLinkedPanels().isEmpty()) {
             ci.cancel();
@@ -531,7 +531,7 @@ abstract class MixinDisplayLinkBlockEntity {
     ),
     remap = false
 )
-private int mekanismPatch$skipEmitWithoutAcceptors(FluidNetwork instance, FluidStack stack) {
+private int arcadiaPatchCreate$skipEmitWithoutAcceptors(FluidNetwork instance, FluidStack stack) {
     return instance.getAcceptorCount() == 0 ? 0 : tickEmit(stack);
 }</code></pre>
 
@@ -576,14 +576,14 @@ private int mekanismPatch$skipEmitWithoutAcceptors(FluidNetwork instance, FluidS
       <pre><code class="language-java">@Mixin(value = BotanyPotBlockEntity.class, remap = false)
 abstract class MixinBotanyPotBlockEntity {
 
-    @Unique private int mekanismPatch$failedExportBackoff;
+    @Unique private int arcadiaPatchCreate$failedExportBackoff;
 
     @Inject(method = "tickPot", at = @At("HEAD"))
-    private static void mekanismPatch$decayBackoff(Level level, BlockPos pos, BlockState state,
+    private static void arcadiaPatchCreate$decayBackoff(Level level, BlockPos pos, BlockState state,
             BotanyPotBlockEntity pot, CallbackInfo ci) {
         MixinBotanyPotBlockEntity self = (MixinBotanyPotBlockEntity) (Object) pot;
-        if (self.mekanismPatch$failedExportBackoff &gt; 0) {
-            self.mekanismPatch$failedExportBackoff--;
+        if (self.arcadiaPatchCreate$failedExportBackoff &gt; 0) {
+            self.arcadiaPatchCreate$failedExportBackoff--;
         }
     }
 
