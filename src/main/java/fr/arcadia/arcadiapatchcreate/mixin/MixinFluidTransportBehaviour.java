@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(targets = "com.simibubi.create.content.fluids.FluidTransportBehaviour", remap = false)
 public abstract class MixinFluidTransportBehaviour {
 
+    private static final long SKIP_LOG_INTERVAL = 262_144L;
     private static final BehaviourInspector BEHAVIOUR_INSPECTOR = BehaviourInspector.resolve();
     private static final ConcurrentHashMap<Class<?>, ConnectionInspector> INSPECTORS = new ConcurrentHashMap<>();
     private static final AtomicLong SKIPPED_TICKS = new AtomicLong();
@@ -104,7 +105,7 @@ public abstract class MixinFluidTransportBehaviour {
         }
 
         long skipped = SKIPPED_TICKS.incrementAndGet();
-        if (skipped <= 3 || skipped % 8192 == 0) {
+        if (skipped <= 3 || skipped % SKIP_LOG_INTERVAL == 0) {
             ArcadiaPatchCreate.LOGGER.info(
                 "[ArcadiaPatchCreate] Skipped {} fully idle Create fluid pipe ticks. Latest position: {}",
                 skipped,
