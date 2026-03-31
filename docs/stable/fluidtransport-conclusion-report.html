@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arcadia Patch Create - FluidTransportBehaviour Conclusion</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1020;
+      --panel: #121a30;
+      --panel-2: #18223d;
+      --text: #e8edf8;
+      --muted: #a9b6d3;
+      --accent: #78d4ff;
+      --accent-2: #7ef0c2;
+      --warn: #ffd479;
+      --border: #2a3557;
+      --good: #86efac;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Inter", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(120, 212, 255, 0.12), transparent 30%),
+        radial-gradient(circle at top right, rgba(126, 240, 194, 0.10), transparent 25%),
+        linear-gradient(180deg, #0a1020 0%, #0b1122 100%);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px 72px;
+    }
+
+    .hero {
+      background: linear-gradient(180deg, rgba(18, 26, 48, 0.96), rgba(13, 19, 35, 0.96));
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+      margin-bottom: 24px;
+    }
+
+    h1, h2, h3 {
+      margin: 0 0 12px;
+      line-height: 1.2;
+    }
+
+    h1 {
+      font-size: 2rem;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      margin-top: 28px;
+    }
+
+    p, li {
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .metric {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--good);
+      margin-bottom: 6px;
+    }
+
+    .label {
+      color: var(--text);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 20px;
+      margin-top: 24px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+    }
+
+    .panel.alt {
+      background: var(--panel-2);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.95rem;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    th {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    td {
+      color: var(--muted);
+    }
+
+    code {
+      font-family: "Cascadia Code", "Consolas", monospace;
+      color: var(--accent);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    .note {
+      border-left: 4px solid var(--accent);
+      padding-left: 14px;
+      margin: 14px 0;
+    }
+
+    .warn {
+      border-left-color: var(--warn);
+    }
+
+    .good {
+      border-left-color: var(--good);
+    }
+
+    ul {
+      margin: 10px 0 0 18px;
+      padding: 0;
+    }
+
+    .footer {
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>FluidTransportBehaviour Patch Conclusion</h1>
+      <p>
+        This report validates the current <code>MixinFluidTransportBehaviour</code> against the local Create 6.0.9
+        source code and the latest Spark comparison runs.
+      </p>
+      <div class="summary">
+        <div class="card">
+          <div class="metric">-72.8%</div>
+          <div class="label">FluidTransportBehaviour.tick</div>
+          <p>Observed on the live setup: <code>544 -&gt; 148</code>.</p>
+        </div>
+        <div class="card">
+          <div class="metric">-72.0%</div>
+          <div class="label">PipeConnection.manageFlows</div>
+          <p>Observed on the live setup: <code>528 -&gt; 148</code>.</p>
+        </div>
+        <div class="card">
+          <div class="metric">-6.6%</div>
+          <div class="label">Global MSPT Mean</div>
+          <p>Observed on the live setup: <code>5.48 -&gt; 5.12</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <h2>Observed Results</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Patched</th>
+              <th>Unpatched</th>
+              <th>Delta</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Live - Create fluids total</td>
+              <td>752</td>
+              <td>2756</td>
+              <td>-72.7%</td>
+            </tr>
+            <tr>
+              <td>Live - FluidTransportBehaviour.tick</td>
+              <td>148</td>
+              <td>544</td>
+              <td>-72.8%</td>
+            </tr>
+            <tr>
+              <td>Live - PipeConnection.manageFlows</td>
+              <td>148</td>
+              <td>528</td>
+              <td>-72.0%</td>
+            </tr>
+            <tr>
+              <td>Live - PumpBlockEntity.tick</td>
+              <td>144</td>
+              <td>536</td>
+              <td>-73.1%</td>
+            </tr>
+            <tr>
+              <td>Live - FluidNetwork.tick</td>
+              <td>136</td>
+              <td>496</td>
+              <td>-72.6%</td>
+            </tr>
+            <tr>
+              <td>Idle - MSPT mean</td>
+              <td>4.54</td>
+              <td>4.72</td>
+              <td>-3.7%</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="note good">
+          <p>
+            The patch no longer crashes on pump placement and is confirmed at runtime by the server log line
+            <code>Skipped ... fully idle Create fluid pipe ticks</code>.
+          </p>
+        </div>
+      </div>
+
+      <div class="panel alt">
+        <h2>Important Reading</h2>
+        <p>
+          The patch was originally designed as an <strong>idle / quasi-idle fast-path</strong>, not as a broad active
+          throughput optimization. The live gain is therefore a bonus effect, not the original promise.
+        </p>
+        <div class="note">
+          <p>
+            The idle comparison is low-sample and therefore weaker. The live comparison is the decisive one here.
+          </p>
+        </div>
+        <div class="note warn">
+          <p>
+            The patch should still be described conservatively: it reduces unnecessary pipe-side fluid maintenance when
+            Create enters a truly idle state, and this can also reduce cost in real live networks that repeatedly fall
+            back into idle windows between useful transfers.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Why A Live Gain Is Coherent With The Original Create Code</h2>
+      <p>
+        The local Create 6.0.9 source confirms that the observed live reduction is technically coherent.
+      </p>
+      <ul>
+        <li>
+          In
+          <code>FluidTransportBehaviour.tick()</code>,
+          Create always runs the expensive server-side block that scans all connections with
+          <code>getProvidedFluid()</code>, then runs <code>PipeConnection.manageFlows(...)</code>,
+          and finally <code>tickFlowProgress(...)</code>, once the behaviour has reached
+          <code>UpdatePhase.IDLE</code>.
+        </li>
+        <li>
+          Our patch intentionally injects late, after <code>super.tick()</code>, after the
+          <code>WAIT_FOR_PUMPS -&gt; FLIP_FLOWS -&gt; IDLE</code> transitions, and after
+          <code>manageSource(...)</code>. This means we are not skipping initialization or source maintenance.
+        </li>
+        <li>
+          The skip only happens when the behaviour is already in <code>IDLE</code> and all inspected connections report
+          no pressure and no flow.
+        </li>
+        <li>
+          In
+          <code>PumpBlockEntity</code>,
+          the nested
+          <code>PumpFluidTransferBehaviour</code>
+          explicitly <strong>extends</strong>
+          <code>FluidTransportBehaviour</code>
+          and calls <code>super.tick()</code> before its own pump-specific work. This directly explains why the Spark
+          reductions also show up on pump-related lines.
+        </li>
+        <li>
+          In
+          <code>PipeConnection.manageFlows(...)</code>,
+          a pipe may still do meaningful checks even when it ends up doing no useful transfer during that tick. If many
+          ticks land in a state with no pressure and no flow, the fast-path removes that repeated maintenance cost.
+        </li>
+        <li>
+          In
+          <code>FluidNetwork.tick()</code>,
+          the network only becomes relevant after flow and source conditions survive the earlier stages. Reducing idle
+          pipe-side work naturally reduces how often the downstream network path is exercised in the same live setup.
+        </li>
+      </ul>
+    </section>
+
+    <section class="panel">
+      <h2>Source Anchors</h2>
+      <ul>
+        <li>
+          Create fluid behaviour:
+          <code>C:\Users\curveo\Documents\Mekanism-Patch\create-src-6.0.9\src\main\java\com\simibubi\create\content\fluids\FluidTransportBehaviour.java</code>
+        </li>
+        <li>
+          Create pipe connection logic:
+          <code>C:\Users\curveo\Documents\Mekanism-Patch\create-src-6.0.9\src\main\java\com\simibubi\create\content\fluids\PipeConnection.java</code>
+        </li>
+        <li>
+          Create fluid network:
+          <code>C:\Users\curveo\Documents\Mekanism-Patch\create-src-6.0.9\src\main\java\com\simibubi\create\content\fluids\FluidNetwork.java</code>
+        </li>
+        <li>
+          Create pump behaviour:
+          <code>C:\Users\curveo\Documents\Mekanism-Patch\create-src-6.0.9\src\main\java\com\simibubi\create\content\fluids\pump\PumpBlockEntity.java</code>
+        </li>
+        <li>
+          Current patch source:
+          <code>C:\Users\curveo\Documents\Mekanism-Patch\arcadia-patch-create\src\main\java\fr\arcadia\arcadiapatchcreate\mixin\MixinFluidTransportBehaviour.java</code>
+        </li>
+      </ul>
+    </section>
+
+    <section class="panel alt">
+      <h2>Final Conclusion</h2>
+      <p>
+        The current fluid patch is coherent with the original Create code and with the measured Spark deltas.
+      </p>
+      <ul>
+        <li>The patch still targets idle / quasi-idle states.</li>
+        <li>The live reduction is believable because active Create fluid setups repeatedly pass through idle windows.</li>
+        <li>The patch now survives pump placement and no longer fails during Mixin application.</li>
+        <li>The live Spark comparison is strong enough to justify keeping the patch.</li>
+      </ul>
+      <div class="note good">
+        <p>
+          Recommendation: <strong>keep <code>MixinFluidTransportBehaviour</code></strong>, but document it as a
+          conservative idle fast-path that also reduces overhead in real live Create fluid systems.
+        </p>
+      </div>
+    </section>
+
+    <p class="footer">
+      Generated from local Create source inspection and the Spark files:
+      <code>fluid-idle-patched.json</code>,
+      <code>fluid-idle-unpatched.json</code>,
+      <code>fluid-live-patched.json</code>,
+      <code>fluid-live-unpatched.json</code>.
+    </p>
+  </div>
+</body>
+</html>
