@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conclusion - MixinBeltInventory</title>
+    <style>
+        :root {
+            --bg: #0b1015;
+            --panel: #141b22;
+            --panel-2: #1a232c;
+            --text: #e8eef5;
+            --muted: #a8b4c1;
+            --line: #2a3642;
+            --accent: #ff8a57;
+            --accent-2: #5bb6ff;
+            --good: #86d39c;
+            --warn: #f0c46b;
+            --bad: #ff8f8f;
+            --shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(255, 138, 87, 0.14), transparent 28%),
+                radial-gradient(circle at top right, rgba(91, 182, 255, 0.12), transparent 26%),
+                linear-gradient(180deg, #0d1319 0%, var(--bg) 100%);
+        }
+
+        .wrap {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+        }
+
+        .hero,
+        .card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            box-shadow: var(--shadow);
+        }
+
+        .hero {
+            padding: 34px 36px 28px;
+            margin-bottom: 24px;
+        }
+
+        .eyebrow {
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
+            line-height: 1.15;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 1.45rem;
+            margin-bottom: 14px;
+        }
+
+        h3 {
+            font-size: 1.05rem;
+            margin-bottom: 10px;
+        }
+
+        p {
+            margin: 0 0 14px;
+            color: var(--muted);
+        }
+
+        .lead {
+            font-size: 1.08rem;
+            max-width: 840px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 24px;
+        }
+
+        .card {
+            padding: 24px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            margin-bottom: 12px;
+        }
+
+        .tag.good {
+            background: rgba(134, 211, 156, 0.13);
+            color: var(--good);
+        }
+
+        .tag.info {
+            background: rgba(91, 182, 255, 0.13);
+            color: var(--accent-2);
+        }
+
+        .tag.warn {
+            background: rgba(240, 196, 107, 0.14);
+            color: var(--warn);
+        }
+
+        .metric {
+            padding: 18px 18px 16px;
+            border-radius: 16px;
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+        }
+
+        .metric .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .metric .label {
+            color: var(--muted);
+            font-size: 0.96rem;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 16px;
+            margin-top: 18px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px 10px;
+            border-top: 1px solid var(--line);
+            vertical-align: top;
+        }
+
+        th {
+            color: #ffd8c9;
+            font-weight: 700;
+        }
+
+        ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        li + li {
+            margin-top: 8px;
+        }
+
+        code {
+            font-family: Consolas, "Courier New", monospace;
+            background: #1f2933;
+            border: 1px solid #33404d;
+            color: #ffd8c9;
+            border-radius: 6px;
+            padding: 1px 5px;
+        }
+
+        .decision {
+            border-left: 4px solid var(--good);
+            padding-left: 16px;
+        }
+
+        .footer {
+            margin-top: 26px;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <section class="hero">
+            <div class="eyebrow">Arcadia Patch Review</div>
+            <h1>Conclusion de test pour <code>MixinBeltInventory</code></h1>
+            <p class="lead">
+                Ce rapport conclut le premier patch retenu pour le mod de performance : un fast-path sur
+                <code>com.simibubi.create.content.kinetics.belt.transport.BeltInventory.tick()</code>
+                quand une belt Create est totalement vide. Les mesures viennent des profils Spark fournis
+                apres test sur serveur avec un seul joueur mais une vraie instance serveur, pas un monde solo local.
+            </p>
+        </section>
+
+        <section class="card">
+            <div class="tag good">Verdict</div>
+            <h2>Decision recommande</h2>
+            <div class="decision">
+                <p>
+                    <strong>Le patch est valide et merite d'etre garde.</strong>
+                    Le signal local sur la cible belt est tres fort, coherent avec l'intention du patch,
+                    et suffisamment net pour etre exploitable meme si le <code>mspt</code> global reste bruite
+                    par d'autres facteurs serveur.
+                </p>
+            </div>
+
+            <div class="metrics">
+                <div class="metric">
+                    <div class="value">~85%</div>
+                    <div class="label">Reduction estimee sur la charge belt en idle</div>
+                </div>
+                <div class="metric">
+                    <div class="value">~96%</div>
+                    <div class="label">Reduction observee sur le run live fourni</div>
+                </div>
+                <div class="metric">
+                    <div class="value">Fort</div>
+                    <div class="label">Signal local dans Spark</div>
+                </div>
+                <div class="metric">
+                    <div class="value">Faible</div>
+                    <div class="label">Risque gameplay estime</div>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid">
+            <section class="card">
+                <div class="tag info">Source</div>
+                <h2>Profils compares</h2>
+                <ul>
+                    <li><code>belt-idle-patched.json</code></li>
+                    <li><code>belt-idle-unpatched.json</code></li>
+                    <li><code>belt-live-patched.json</code></li>
+                    <li><code>belt-live-unpatched.json</code></li>
+                </ul>
+                <p style="margin-top: 14px;">
+                    Les runs compares ont ete pris sur serveur avec un seul joueur present, ce qui est utile ici :
+                    une chute nette sur une seule machine est deja un bon indicateur de valeur reelle.
+                </p>
+            </section>
+
+            <section class="card">
+                <div class="tag warn">Portee</div>
+                <h2>Ce que le patch cible vraiment</h2>
+                <ul>
+                    <li>Belts Create chargees dans le monde</li>
+                    <li>Belts structurellement presentes dans une base</li>
+                    <li>Mais sans item en transit</li>
+                    <li>Sans insertion en attente</li>
+                    <li>Sans suppression en attente</li>
+                </ul>
+            </section>
+        </div>
+
+        <section class="card" style="margin-top: 24px;">
+            <div class="tag info">Resultats</div>
+            <h2>Resume des chiffres utiles</h2>
+            <table>
+                <tr>
+                    <th>Scenario</th>
+                    <th>Mesure</th>
+                    <th>Sans patch</th>
+                    <th>Avec patch</th>
+                    <th>Lecture</th>
+                </tr>
+                <tr>
+                    <td>Idle</td>
+                    <td><code>belt namespace sum</code></td>
+                    <td>188</td>
+                    <td>28</td>
+                    <td>Baisse tres nette, environ <strong>-85 %</strong></td>
+                </tr>
+                <tr>
+                    <td>Idle</td>
+                    <td><code>SmartBlockEntityTicker.tick</code></td>
+                    <td>192</td>
+                    <td>36</td>
+                    <td>Baisse forte, environ <strong>-81 %</strong></td>
+                </tr>
+                <tr>
+                    <td>Live</td>
+                    <td><code>belt namespace sum</code></td>
+                    <td>804</td>
+                    <td>28</td>
+                    <td>Signal tres positif sur ce run, environ <strong>-96.5 %</strong></td>
+                </tr>
+                <tr>
+                    <td>Live</td>
+                    <td><code>SmartBlockEntityTicker.tick</code></td>
+                    <td>768</td>
+                    <td>92</td>
+                    <td>Baisse marquee, environ <strong>-88 %</strong></td>
+                </tr>
+            </table>
+        </section>
+
+        <div class="grid">
+            <section class="card">
+                <div class="tag good">Interpretation</div>
+                <h2>Pourquoi ce resultat est credible</h2>
+                <ul>
+                    <li>Le patch est extremement cible.</li>
+                    <li>Il court-circuite uniquement un cas totalement vide.</li>
+                    <li>Le signal Spark baisse exactement sur la famille de classes attendue.</li>
+                    <li><code>BeltInventory.tick</code> disparait des runs patches, ce qui colle avec un cancel en tete de methode.</li>
+                </ul>
+            </section>
+
+            <section class="card">
+                <div class="tag warn">Prudence</div>
+                <h2>Ce que ce test ne prouve pas</h2>
+                <ul>
+                    <li>Il ne prouve pas un gain global <code>mspt</code> parfaitement stable.</li>
+                    <li>Il ne permet pas de promettre un pourcentage serveur universel.</li>
+                    <li>Il n'elimine pas tout le bruit venant d'autres systems charges en meme temps.</li>
+                </ul>
+            </section>
+        </div>
+
+        <section class="card" style="margin-top: 24px;">
+            <div class="tag info">Lecture serveur</div>
+            <h2>Ce que cela implique pour un serveur avec plus de joueurs</h2>
+            <p>
+                Le gain global ne sera pas forcement le meme en pourcentage, car il dependra du reste de la charge serveur.
+                En revanche, le gain local observe ici est suffisamment fort pour conclure qu'un serveur avec plus de joueurs,
+                plus de chunks charges et plus de belts presentes beneficiera tres probablement d'un gain concret en temps CPU absolu.
+            </p>
+            <p>
+                En clair : le patch n'est pas une promesse magique de <code>mspt</code>, mais il retire bien du travail reel
+                sur une cible frequente et pertinente.
+            </p>
+        </section>
+
+        <section class="card" style="margin-top: 24px;">
+            <div class="tag good">Conclusion finale</div>
+            <h2>Position recommandee pour le mod</h2>
+            <ul>
+                <li>Garder <code>MixinBeltInventory</code> dans le mod.</li>
+                <li>Le considerer comme un patch prudent a fort impact local.</li>
+                <li>Ne pas le vendre comme une optimisation globale universelle, mais comme une micro-optimisation efficace sur les belts Create vides.</li>
+                <li>Utiliser ce patch comme nouvelle base propre avant d'ajouter une seconde cible Create si besoin.</li>
+            </ul>
+
+            <p class="footer">
+                Recommendation de suite logique : conserver ce patch en production de test, puis evaluer ensuite
+                <code>FluidTransportBehaviour</code> avec la meme rigueur.
+            </p>
+        </section>
+    </div>
+</body>
+</html>
