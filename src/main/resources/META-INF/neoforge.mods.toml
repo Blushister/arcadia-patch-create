@@ -1,0 +1,33 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "MIT"
+
+[[mixins]]
+    config = "mekanism_patch.mixins.json"
+
+[[mods]]
+    modId = "arcadia_patch_create"
+    version = "1.0.0"
+    displayName = "Arcadia Patch Create"
+    description = "Validated Create performance patches maintained for Arcadia servers."
+
+[[dependencies.arcadia_patch_create]]
+    modId = "neoforge"
+    type = "required"
+    versionRange = "[21.1.221,)"
+    ordering = "NONE"
+    side = "BOTH"
+
+[[dependencies.arcadia_patch_create]]
+    modId = "create"
+    type = "required"
+    versionRange = "[0,)"
+    ordering = "AFTER"
+    side = "BOTH"
+
+[[dependencies.arcadia_patch_create]]
+    modId = "mekanism"
+    type = "required"
+    versionRange = "[10.7,)"
+    ordering = "AFTER"
+    side = "BOTH"

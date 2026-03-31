@@ -1,0 +1,41 @@
+plugins {
+    id 'net.neoforged.moddev' version '2.0.80'
+}
+
+version = "${mod_version}"
+group = "${mod_group}"
+
+neoForge {
+    version = "${neo_version}"
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+dependencies {
+    // Local Mekanism references used only to compile against the server mod set.
+    def mekanismCoreJar = file("../Mekanism-1.21.1-10.7.18.84.jar")
+    if (!mekanismCoreJar.exists()) {
+        mekanismCoreJar = file("../mekanism-src-build/build/libs/Mekanism-1.21.1-10.7.18.homebaked.jar")
+    }
+    def mekanismGeneratorsJar = file("../MekanismGenerators-1.21.1-10.7.18.homebaked.jar")
+    if (!mekanismGeneratorsJar.exists()) {
+        mekanismGeneratorsJar = file("../mekanism-src-build/build/libs/MekanismGenerators-1.21.1-10.7.18.homebaked.jar")
+    }
+    compileOnly files(mekanismCoreJar)
+    compileOnly files(mekanismGeneratorsJar)
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+tasks.named('jar') {
+    manifest {
+        attributes([
+            'MixinConfigs': 'mekanism_patch.mixins.json'
+        ])
+    }
+}
