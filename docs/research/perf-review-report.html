@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rapport de revue perf - Arcadia / Mekanism / Create</title>
+  <style>
+    :root {
+      --bg: #f6f1e8;
+      --paper: #fffaf2;
+      --ink: #1f1a17;
+      --muted: #5f564e;
+      --line: #d9cdbf;
+      --accent: #9d4edd;
+      --accent-2: #b85c38;
+      --good: #2d6a4f;
+      --warn: #b7791f;
+      --bad: #9b2226;
+      --shadow: 0 18px 50px rgba(31, 26, 23, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      background:
+        radial-gradient(circle at top left, rgba(157, 78, 221, 0.08), transparent 28%),
+        radial-gradient(circle at top right, rgba(184, 92, 56, 0.08), transparent 24%),
+        linear-gradient(180deg, #f8f3ea 0%, var(--bg) 100%);
+      color: var(--ink);
+      line-height: 1.6;
+    }
+
+    .page {
+      width: min(1100px, calc(100vw - 32px));
+      margin: 32px auto 64px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 40px 44px 28px;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(135deg, rgba(157, 78, 221, 0.06), transparent 40%),
+        linear-gradient(225deg, rgba(184, 92, 56, 0.07), transparent 45%);
+    }
+
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 10px;
+    }
+
+    h1, h2, h3 {
+      line-height: 1.15;
+      margin: 0 0 12px;
+      font-weight: 700;
+    }
+
+    h1 {
+      font-size: 42px;
+    }
+
+    h2 {
+      font-size: 28px;
+      margin-top: 38px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+    }
+
+    h3 {
+      font-size: 20px;
+      margin-top: 28px;
+    }
+
+    p {
+      margin: 0 0 14px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+      padding: 16px 18px;
+    }
+
+    .card strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .body {
+      padding: 8px 44px 48px;
+    }
+
+    .callout {
+      border-left: 5px solid var(--accent);
+      padding: 14px 16px;
+      margin: 18px 0;
+      background: rgba(157, 78, 221, 0.06);
+    }
+
+    .decision {
+      border-left-color: var(--accent-2);
+      background: rgba(184, 92, 56, 0.07);
+    }
+
+    .status {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border: 1px solid currentColor;
+      margin-bottom: 10px;
+    }
+
+    .good { color: var(--good); }
+    .warn { color: var(--warn); }
+    .bad { color: var(--bad); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 20px;
+      font-size: 15px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: rgba(31, 26, 23, 0.04);
+    }
+
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.92em;
+      background: rgba(31, 26, 23, 0.06);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    ul {
+      margin: 8px 0 18px 20px;
+      padding: 0;
+    }
+
+    li {
+      margin: 8px 0;
+    }
+
+    .footer {
+      margin-top: 34px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">Arcadia · Minecraft 1.21.1 · NeoForge · 30/03/2026</p>
+      <h1>Rapport de revue performance</h1>
+      <p>
+        Synthèse croisée des profils Spark, des sources locales Mekanism 10.7.18 et des sources officielles
+        Create 6.0.9 pour décider où investir les prochains patchs sans partir au hasard.
+      </p>
+
+      <div class="summary">
+        <div class="card">
+          <strong>Verdict court</strong>
+          Le vrai coût visible vient surtout de <em>Create logistics / transport</em> et des
+          <em>réseaux Mekanism</em>, pas des turbines.
+        </div>
+        <div class="card">
+          <strong>Versions confirmées</strong>
+          Mekanism 10.7.18.84, Mekanism Generators 10.7.18.84, Create 1.21.1-6.0.9.
+        </div>
+        <div class="card">
+          <strong>Priorité de patch</strong>
+          1. Create fluid transport<br>
+          2. Create item logistics<br>
+          3. Mekanism transmitters
+        </div>
+        <div class="card">
+          <strong>Non prioritaire</strong>
+          Turbines Mekanism, UniversalCable, anciens shadows fragiles.
+        </div>
+      </div>
+    </section>
+
+    <section class="body">
+      <h2>1. Sources utilisées</h2>
+      <p>Le rapport s’appuie sur quatre blocs d’information.</p>
+      <ul>
+        <li>Les profils Spark locaux de test et les profils “officiels” déposés dans <code>debug-input/extra</code>.</li>
+        <li>Les logs de boot serveur dans <code>debug-input/logs</code>, qui confirment les versions réellement chargées.</li>
+        <li>Le code source Mekanism local présent dans <code>mekanism-src-build</code>.</li>
+        <li>Le code source officiel Create 6.0.9 cloné depuis le dépôt officiel dans <code>create-src-6.0.9</code>.</li>
+      </ul>
+
+      <div class="callout">
+        <strong>Versions confirmées par les logs</strong><br>
+        <code>create-1.21.1-6.0.9.jar</code><br>
+        <code>Mekanism-1.21.1-10.7.18.84.jar</code><br>
+        <code>MekanismGenerators-1.21.1-10.7.18.84.jar</code><br>
+        <code>botanypots-neoforge-1.21.1-21.1.41.jar</code>
+      </div>
+
+      <h2>2. Résumé exécutif</h2>
+      <p>
+        Les profils réels des serveurs Arcadia montrent une image cohérente : le serveur dépense surtout son temps
+        dans les ticks monde, les block entities, les entités et les chaînes de transport/logistics. Dans ce cadre,
+        Create ressort plus fortement par ses block entities de transport et ses behaviours, tandis que Mekanism
+        ressort par ses réseaux de transmetteurs. La turbine Mekanism n’apparaît pas comme hotspot majeur sur les
+        serveurs officiels fournis.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Sujet</th>
+            <th>État</th>
+            <th>Conclusion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Turbines Mekanism</td>
+            <td><span class="status warn">Faible impact</span></td>
+            <td>Patch possible en micro-optimisation, mais ce n’est pas la priorité serveur.</td>
+          </tr>
+          <tr>
+            <td>Réseaux Mekanism</td>
+            <td><span class="status good">Cible réelle</span></td>
+            <td>Coût confirmé dans <code>TransmitterNetworkRegistry</code> et les <code>*Network.onUpdate/tickEmit</code>.</td>
+          </tr>
+          <tr>
+            <td>Create fluid transport</td>
+            <td><span class="status good">Très forte cible</span></td>
+            <td><code>FluidTransportBehaviour.tick</code> est un des coûts Create les plus réguliers.</td>
+          </tr>
+          <tr>
+            <td>Create item logistics</td>
+            <td><span class="status good">Très forte cible</span></td>
+            <td>Belts, funnels, chutes, depots, brass tunnels et packagers forment une chaîne de coût crédible.</td>
+          </tr>
+          <tr>
+            <td>UniversalCable</td>
+            <td><span class="status bad">À écarter</span></td>
+            <td>Ancien patch cassé, non rentable à réactiver en l’état.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>3. Lecture des rapports Spark</h2>
+      <h3>3.1 Serveurs officiels</h3>
+      <p>
+        Les deux profils “officiels” se ressemblent : MSPT très élevé, beaucoup de chunks et une présence importante
+        des coûts monde standard, mais aussi un signal très clair sur Create et un signal réel sur les réseaux
+        Mekanism.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Profil</th>
+            <th>MSPT moyen</th>
+            <th>Signal principal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>ArcadiaOfficial.json</code></td>
+            <td>~77.1</td>
+            <td>Create logistics/fluids + Mekanism transmitters visibles, turbine très faible</td>
+          </tr>
+          <tr>
+            <td><code>ArcadiaOfficialserv2.json</code></td>
+            <td>~80.3</td>
+            <td>Create logistics/fluids encore plus clair, Mekanism transmitters toujours présents</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>3.2 Hotspots réellement visibles</h3>
+      <p>Côté Create, les noms qui reviennent le plus souvent sont les suivants :</p>
+      <ul>
+        <li><code>com.simibubi.create.foundation.blockEntity.SmartBlockEntityTicker.tick</code></li>
+        <li><code>com.simibubi.create.content.fluids.FluidTransportBehaviour.tick</code></li>
+        <li><code>com.simibubi.create.content.kinetics.belt.BeltBlockEntity.tick</code></li>
+        <li><code>com.simibubi.create.content.kinetics.belt.transport.BeltInventory.tick</code></li>
+        <li><code>com.simibubi.create.content.logistics.funnel.FunnelBlockEntity.tick</code></li>
+        <li><code>com.simibubi.create.content.logistics.chute.ChuteBlockEntity.tick</code></li>
+        <li><code>com.simibubi.create.content.logistics.depot.DepotBehaviour.tick</code></li>
+        <li><code>com.simibubi.create.content.logistics.packager.PackagerBlockEntity.getAvailableItems</code></li>
+        <li><code>com.simibubi.create.content.logistics.packagerLink.LogisticsManager.getSummaryOfNetwork</code></li>
+      </ul>
+
+      <p>Côté Mekanism, les classes qui ressortent réellement sont :</p>
+      <ul>
+        <li><code>mekanism.common.lib.transmitter.TransmitterNetworkRegistry.onTick</code></li>
+        <li><code>mekanism.common.content.network.EnergyNetwork.onUpdate</code> / <code>tickEmit</code></li>
+        <li><code>mekanism.common.content.network.FluidNetwork.onUpdate</code> / <code>tickEmit</code></li>
+        <li><code>mekanism.common.content.network.ChemicalNetwork.onUpdate</code> / <code>tickEmit</code></li>
+      </ul>
+
+      <div class="callout">
+        <strong>Point important</strong><br>
+        Sur les profils officiels fournis, <code>TurbineMultiblockData.tick</code> est bien présent mais reste très petit.
+        Le patch turbine peut rester comme micro-optimisation prudente, mais il ne règle pas le vrai problème serveur.
+      </div>
+
+      <h3>3.3 Botany Pots</h3>
+      <p>
+        Les profils montrent bien <code>BotanyPotBlockEntity.tickPot</code> et les chemins de récolte associés
+        (<code>BasicCrop.onHarvest</code>, <code>LootTableDrops.apply</code>). Donc les Botany Pots ne sont pas “invisibles” :
+        ils coûtent quelque chose. En revanche, les données ne démontrent pas encore de manière stricte que le surcoût
+        majeur provient spécifiquement de la combinaison “Botany Pot plein + sortie pleine + câble Mekanism”.
+      </p>
+      <p>
+        La piste reste néanmoins crédible, parce qu’on voit simultanément :
+      </p>
+      <ul>
+        <li>les ticks Botany Pot eux-mêmes,</li>
+        <li>les réseaux Mekanism qui simulent/émettent,</li>
+        <li>et, dans d’autres zones du profil, de fortes chaînes Create logistics.</li>
+      </ul>
+
+      <h2>4. Ce que dit le code source Mekanism</h2>
+      <h3>4.1 Réseaux</h3>
+      <p>
+        Dans <code>TransmitterNetworkRegistry.onTick()</code>, Mekanism parcourt tous les réseaux enregistrés et appelle
+        <code>net.onUpdate()</code> à chaque tick serveur. Cela veut dire que dès qu’un grand nombre de réseaux existe,
+        même si chacun n’est “pas énorme”, la somme peut devenir visible.
+      </p>
+
+      <p>
+        Dans les trois réseaux principaux :
+      </p>
+      <ul>
+        <li><code>EnergyNetwork.tickEmit()</code> parcourt les acceptors et simule des insertions d’énergie.</li>
+        <li><code>FluidNetwork.tickEmit()</code> parcourt les acceptors et appelle <code>FluidUtils.canFill()</code>.</li>
+        <li><code>ChemicalNetwork.tickEmit()</code> parcourt les acceptors et appelle <code>ChemicalUtil.canInsert()</code>.</li>
+      </ul>
+
+      <p>
+        Cela confirme que la vraie cible Mekanism est la famille “réseaux/transmitters”, pas UniversalCable en tant que
+        patch exotique et encore moins la turbine comme priorité globale.
+      </p>
+
+      <h3>4.2 Turbines</h3>
+      <p>
+        Le patch turbine que tu as maintenant est conservateur et techniquement raisonnable. Le problème est seulement
+        son poids relatif : dans les profils réels, la turbine ne pèse pas assez pour être une priorité majeure.
+      </p>
+
+      <h2>5. Ce que dit le code source Create 6.0.9</h2>
+      <h3>5.1 Le ticker “SmartBlockEntity” n’est pas le problème, c’est le conteneur du problème</h3>
+      <p>
+        <code>SmartBlockEntityTicker.tick()</code> se contente d’appeler <code>SmartBlockEntity.tick()</code>. Ensuite,
+        <code>SmartBlockEntity.tick()</code> appelle tous les behaviours du bloc. Donc voir
+        <code>SmartBlockEntityTicker.tick</code> très haut dans Spark signifie simplement “beaucoup de block entities
+        Create font du travail”, pas “ce ticker est mal codé”.
+      </p>
+
+      <h3>5.2 Fluid transport Create</h3>
+      <p>
+        <code>FluidTransportBehaviour.tick()</code> itère les connexions du bloc et peut passer par :
+      </p>
+      <ul>
+        <li><code>flipFlowsIfPressureReversed()</code></li>
+        <li><code>manageSource()</code></li>
+        <li><code>manageFlows()</code></li>
+        <li><code>tickFlowProgress()</code></li>
+      </ul>
+      <p>
+        Même quand un pipe ne “produit” rien de visible pour le joueur, il peut continuer à réévaluer sources, pressions,
+        flow state et réseaux internes. C’est une excellente explication de tes observations sur les blocs Create qui
+        tournent “à vide” ou “en surplus”.
+      </p>
+
+      <h3>5.3 Item logistics Create</h3>
+      <p>
+        Les belts et les blocs autour des belts sont une vraie chaîne de coûts cumulés :
+      </p>
+      <ul>
+        <li><code>BeltInventory.tick()</code> évalue movement, spacing, ending, processing, funnels, tunnels, crushers.</li>
+        <li><code>FunnelBlockEntity.tick()</code> combine cooldowns, inventaire, checks d’occupation, extraction, insertion belt.</li>
+        <li><code>ChuteBlockEntity.tick()</code> combine capability lookup, item motion, extraction depuis inventaire et belt.</li>
+        <li><code>DepotBehaviour.tick()</code> gère items entrants, processing et output belt/funnel.</li>
+        <li><code>BrassTunnelBlockEntity.tick()</code> fait de la distribution d’outputs et des scans de sorties valides.</li>
+        <li><code>PackagerBlockEntity.getAvailableItems()</code> et <code>LogisticsManager.getSummaryOfNetwork()</code> relisent des inventaires et résument des réseaux logistics.</li>
+      </ul>
+
+      <div class="callout">
+        <strong>Lecture la plus probable</strong><br>
+        Si tu as l’impression terrain que “les item pipes” sont le vrai problème, les profils et les sources pointent
+        beaucoup plus vers les <em>logistics Create</em> que vers les turbines Mekanism.
+      </div>
+
+      <h2>6. Mise en concordance avec tes observations</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Observation</th>
+            <th>État</th>
+            <th>Commentaire</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Botany Pots + câbles Mekanism = beaucoup de lag si plein</td>
+            <td><span class="status warn">Plausible</span></td>
+            <td>Compatible avec Spark, mais pas encore prouvé de façon stricte sans profil ciblé sur cette setup.</td>
+          </tr>
+          <tr>
+            <td>Multiblocks Create et Mekanism</td>
+            <td><span class="status warn">Partiellement vrai</span></td>
+            <td>Le vrai signal visible n’est pas “les multiblocks” en général, mais surtout les block entities/logistics/réseaux.</td>
+          </tr>
+          <tr>
+            <td>Blocs Create à vide ou en surplus</td>
+            <td><span class="status good">Très crédible</span></td>
+            <td>Fortement cohérent avec <code>FluidTransportBehaviour</code>, belts, funnels, chutes, depots et packagers.</td>
+          </tr>
+          <tr>
+            <td>Turbines Mekanism comme hotspot principal</td>
+            <td><span class="status bad">Non confirmé</span></td>
+            <td>Les profils réels montrent l’inverse : coût faible à l’échelle du serveur.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>7. Décision recommandée</h2>
+      <div class="callout decision">
+        <strong>Décision que je recommanderais</strong><br>
+        Garder le patch turbine uniquement comme micro-patch prudent si tu veux, mais déplacer la priorité de
+        développement vers Create transport/logistics puis vers les réseaux Mekanism. Ne pas ressusciter les anciens
+        patches <code>UniversalCable</code> ou <code>EnergyNetwork</code> basés sur des shadows fragiles.
+      </div>
+
+      <h3>Ordre de priorité recommandé</h3>
+      <ol>
+        <li>Create fluid transport : <code>FluidTransportBehaviour</code> et <code>PipeConnection</code>.</li>
+        <li>Create item logistics : belts, funnels, chutes, depots, brass tunnels, packagers.</li>
+        <li>Mekanism transmitters : <code>TransmitterNetworkRegistry</code>, <code>EnergyNetwork</code>, <code>FluidNetwork</code>, <code>ChemicalNetwork</code>.</li>
+        <li>Validation spécifique éventuelle d’une setup Botany Pots + sortie saturée.</li>
+        <li>Turbines Mekanism seulement en optimisation secondaire.</li>
+      </ol>
+
+      <h2>8. Conclusion</h2>
+      <p>
+        Si l’objectif est d’obtenir un gain réel sur Arcadia, les données convergent vers une réponse claire :
+        les prochains patchs les plus prometteurs sont du côté de Create transport/logistics et des réseaux
+        Mekanism, pas du côté des turbines.
+      </p>
+      <p>
+        En d’autres termes : ton intuition “les item pipes foutent le bordel surtout” est bien plus compatible avec
+        les profils réels que l’hypothèse “la turbine est le hotspot principal”.
+      </p>
+
+      <div class="footer">
+        Rapport généré à partir des fichiers présents dans le workspace local :
+        <code>debug-input/extra</code>, <code>debug-input/logs</code>,
+        <code>mekanism-src-build</code> et <code>create-src-6.0.9</code>.
+      </div>
+    </section>
+  </main>
+</body>
+</html>
