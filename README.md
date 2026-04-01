@@ -5,9 +5,14 @@
 The repository intentionally keeps `main` limited to patches that have been tested and approved. Experimental ideas,
 profiling notes, and broader optimization research live on `dev`.
 
+Project links:
+- Repository: `https://github.com/Blushister/arcadia-patch-create`
+- Issues: `https://github.com/Blushister/arcadia-patch-create/issues`
+
 ## Current validated patch set
 
 - Create `BeltInventory` early return when a belt is completely empty.
+- Create `FluidTransportBehaviour` idle fast-path with conservative server-side guards.
 
 ## Supported environment
 
@@ -15,6 +20,7 @@ profiling notes, and broader optimization research live on `dev`.
 - NeoForge `21.1.221`
 - Create `6.0.9`
 - Java `21`
+- Current mod version: `1.1.0`
 
 ## Build
 

@@ -6,3 +6,5 @@ This directory contains documentation for patches that were tested and accepted 
 
 - `beltinventory-test-procedure.html`
 - `beltinventory-conclusion-report.html`
+- `fluidtransport-test-procedure.html`
+- `fluidtransport-conclusion-report.html`
