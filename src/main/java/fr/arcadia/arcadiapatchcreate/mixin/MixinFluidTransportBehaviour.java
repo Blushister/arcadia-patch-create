@@ -1,6 +1,7 @@
 package fr.arcadia.arcadiapatchcreate.mixin;
 
 import fr.arcadia.arcadiapatchcreate.ArcadiaPatchCreate;
+import fr.arcadia.arcadiapatchcreate.runtime.PatchRuntime;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -35,6 +36,9 @@ public abstract class MixinFluidTransportBehaviour {
         remap = false
     )
     private void arcadiaPatchCreate$skipTrulyIdlePipe(CallbackInfo ci) {
+        if (!PatchRuntime.isFluidPatchEnabled()) {
+            return;
+        }
         if (!BEHAVIOUR_INSPECTOR.available()) {
             return;
         }
@@ -50,6 +54,7 @@ public abstract class MixinFluidTransportBehaviour {
             phase = BEHAVIOUR_INSPECTOR.getPhase(this);
         } catch (ReflectiveOperationException e) {
             long failures = FAILED_INSPECTIONS.incrementAndGet();
+            PatchRuntime.incrementFluidInspectionFailures();
             if (failures <= 3 || failures % 1024 == 0) {
                 ArcadiaPatchCreate.LOGGER.warn(
                     "[ArcadiaPatchCreate] Fluid pipe behaviour inspection failed. Falling back to Create logic.",
@@ -77,6 +82,7 @@ public abstract class MixinFluidTransportBehaviour {
             ConnectionInspector inspector = INSPECTORS.computeIfAbsent(connection.getClass(), ConnectionInspector::resolve);
             if (!inspector.available()) {
                 long failures = FAILED_INSPECTIONS.incrementAndGet();
+                PatchRuntime.incrementFluidInspectionFailures();
                 if (failures <= 3 || failures % 1024 == 0) {
                     ArcadiaPatchCreate.LOGGER.warn(
                         "[ArcadiaPatchCreate] Fluid pipe idle fast-path could not inspect {} at {}. Falling back to Create logic.",
@@ -93,6 +99,7 @@ public abstract class MixinFluidTransportBehaviour {
                 }
             } catch (ReflectiveOperationException e) {
                 long failures = FAILED_INSPECTIONS.incrementAndGet();
+                PatchRuntime.incrementFluidInspectionFailures();
                 if (failures <= 3 || failures % 1024 == 0) {
                     ArcadiaPatchCreate.LOGGER.warn(
                         "[ArcadiaPatchCreate] Fluid pipe idle inspection failed at {}. Falling back to Create logic.",
@@ -105,6 +112,7 @@ public abstract class MixinFluidTransportBehaviour {
         }
 
         long skipped = SKIPPED_TICKS.incrementAndGet();
+        PatchRuntime.incrementFluidSkips();
         if (skipped <= 3 || skipped % SKIP_LOG_INTERVAL == 0) {
             ArcadiaPatchCreate.LOGGER.info(
                 "[ArcadiaPatchCreate] Skipped {} fully idle Create fluid pipe ticks. Latest position: {}",
