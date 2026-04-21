@@ -1,5 +1,6 @@
 package fr.arcadia.arcadiapatchcreate.runtime;
 
+import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 import net.minecraft.server.MinecraftServer;
@@ -25,6 +26,10 @@ public final class PatchRuntime {
     private static volatile int globalStaticInterval = 2;
     private static volatile Double simulatedMspt = null;
     private static volatile int createPhysicalItemsDespawnTicks = 1_200;
+
+    // --- MSPT reflection (getAverageTickTime exists at runtime via NeoForge, not in compile classpath) ---
+    private static volatile Method averageTickTimeMethod;
+    private static volatile boolean averageTickTimeResolved;
 
     // --- Counters ---
     private static final AtomicLong beltSkips = new AtomicLong();
@@ -259,7 +264,35 @@ public final class PatchRuntime {
         if (server == null) {
             return 0.0D;
         }
-        return server.getAverageTickTime();
+        try {
+            Method method = resolveAverageTickTimeMethod(server.getClass());
+            if (method != null) {
+                Object value = method.invoke(server);
+                if (value instanceof Number number) {
+                    return number.doubleValue();
+                }
+            }
+        } catch (ReflectiveOperationException ignored) {
+        }
+        return 0.0D;
+    }
+
+    private static Method resolveAverageTickTimeMethod(Class<?> serverClass) {
+        if (averageTickTimeResolved) {
+            return averageTickTimeMethod;
+        }
+        synchronized (PatchRuntime.class) {
+            if (averageTickTimeResolved) {
+                return averageTickTimeMethod;
+            }
+            try {
+                averageTickTimeMethod = serverClass.getMethod("getAverageTickTime");
+            } catch (NoSuchMethodException ignored) {
+                averageTickTimeMethod = null;
+            }
+            averageTickTimeResolved = true;
+            return averageTickTimeMethod;
+        }
     }
 
     // --- Startup restore ---
