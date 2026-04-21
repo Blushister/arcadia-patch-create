@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rapport comparatif - stratégies de patch perf</title>
+  <style>
+    :root {
+      --bg: #f4efe7;
+      --paper: #fffaf3;
+      --ink: #221d19;
+      --muted: #645a52;
+      --line: #d8cab9;
+      --accent: #007f5f;
+      --accent-2: #8d5a97;
+      --accent-3: #c25b32;
+      --good: #2d6a4f;
+      --warn: #b7791f;
+      --bad: #9b2226;
+      --shadow: 0 20px 50px rgba(34, 29, 25, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      background:
+        radial-gradient(circle at top left, rgba(0, 127, 95, 0.08), transparent 30%),
+        radial-gradient(circle at top right, rgba(141, 90, 151, 0.08), transparent 26%),
+        linear-gradient(180deg, #f8f3ea 0%, var(--bg) 100%);
+      color: var(--ink);
+      line-height: 1.65;
+    }
+
+    .page {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 28px auto 60px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 42px 46px 30px;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(135deg, rgba(0, 127, 95, 0.07), transparent 42%),
+        linear-gradient(225deg, rgba(194, 91, 50, 0.07), transparent 48%);
+    }
+
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 10px;
+    }
+
+    h1, h2, h3 {
+      line-height: 1.15;
+      margin: 0 0 12px;
+      font-weight: 700;
+    }
+
+    h1 {
+      font-size: 42px;
+    }
+
+    h2 {
+      font-size: 29px;
+      margin-top: 40px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    h3 {
+      font-size: 21px;
+      margin-top: 28px;
+    }
+
+    p {
+      margin: 0 0 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      padding: 16px 18px;
+      background: rgba(255, 255, 255, 0.75);
+    }
+
+    .card strong {
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .body {
+      padding: 10px 46px 48px;
+    }
+
+    .callout {
+      margin: 18px 0;
+      padding: 14px 16px;
+      border-left: 5px solid var(--accent);
+      background: rgba(0, 127, 95, 0.06);
+    }
+
+    .warnbox {
+      border-left-color: var(--accent-3);
+      background: rgba(194, 91, 50, 0.07);
+    }
+
+    .decision {
+      border-left-color: var(--accent-2);
+      background: rgba(141, 90, 151, 0.07);
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .good { color: var(--good); }
+    .warn { color: var(--warn); }
+    .bad { color: var(--bad); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 22px;
+      font-size: 15px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: rgba(34, 29, 25, 0.04);
+    }
+
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.92em;
+      background: rgba(34, 29, 25, 0.06);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    pre {
+      overflow-x: auto;
+      margin: 14px 0 18px;
+      padding: 14px 16px;
+      background: #201c19;
+      color: #f5eee6;
+      border: 1px solid #3a322c;
+      line-height: 1.45;
+      font-size: 13px;
+    }
+
+    ul, ol {
+      margin: 8px 0 18px 20px;
+      padding: 0;
+    }
+
+    li {
+      margin: 8px 0;
+    }
+
+    a {
+      color: var(--accent);
+    }
+
+    .footer {
+      margin-top: 32px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">Arcadia · Rapport comparatif de stratégies perf</p>
+      <h1>Quoi patcher maintenant, et comment le patcher intelligemment</h1>
+      <p>
+        Ce rapport compare les techniques d’optimisation réellement pertinentes après lecture des profils Spark,
+        des sources locales Mekanism, des sources officielles Create 6.0.9 et des sources officielles Botany Pots 1.21.1.
+        L’objectif est de répondre à une question simple : <em>quels patchs valent vraiment le coup, lesquels sont
+        faisables avec Mixin, et lesquels risquent juste d’être fragiles ou inutiles ?</em>
+      </p>
+
+      <div class="grid">
+        <div class="card">
+          <strong>Versions relues</strong>
+          Create 6.0.9<br>
+          Mekanism 10.7.18<br>
+          Botany Pots 21.1.41
+        </div>
+        <div class="card">
+          <strong>Top priorité</strong>
+          Create fluid transport<br>
+          Create item logistics
+        </div>
+        <div class="card">
+          <strong>Priorité médiane</strong>
+          Mekanism transmitters<br>
+          Botany Pots hopper saturation
+        </div>
+        <div class="card">
+          <strong>À éviter</strong>
+          Patches globaux sur ticker commun<br>
+          Gros throttling réseau gameplay-sensitive
+        </div>
+      </div>
+    </section>
+
+    <section class="body">
+      <h2>1. Base de comparaison</h2>
+      <p>La comparaison repose sur quatre familles d’indices.</p>
+      <ul>
+        <li>Les profils Spark “officiels” montrent que Create transport/logistics et Mekanism transmitters reviennent de façon répétée.</li>
+        <li>La source Mekanism confirme que les réseaux sont tickés tous les ticks et itèrent les acceptors lors des émissions.</li>
+        <li>La source Create confirme que belts, funnels, chutes, depots, packagers et fluid pipes font du travail récurrent même hors “travail productif” visible.</li>
+        <li>La source Botany Pots confirme qu’un hopper pot mature continue sa boucle de croissance/harvest/export et tente l’insert vers le bas via un cooldown d’export très court.</li>
+      </ul>
+
+      <div class="callout">
+        <strong>Idée centrale</strong><br>
+        Le meilleur patch n’est pas celui qui “supprime du tick” en aveugle, mais celui qui
+        court-circuite proprement des chemins coûteux dans des états déjà stables, saturés ou sans destination utile.
+      </div>
+
+      <h2>2. Techniques d’optimisation comparées</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Technique</th>
+            <th>Principe</th>
+            <th>Valeur</th>
+            <th>Risque gameplay</th>
+            <th>Faisable en Mixin</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Early-return sur état idle vérifié</td>
+            <td>Ne rien faire si l’état courant garantit qu’aucun travail utile n’est possible.</td>
+            <td>Très bonne</td>
+            <td>Faible si les conditions sont strictes</td>
+            <td>Oui, excellent candidat</td>
+          </tr>
+          <tr>
+            <td>Backoff après échec d’export</td>
+            <td>Si une sortie est pleine et refuse plusieurs fois, espacer les réessais pendant quelques ticks.</td>
+            <td>Très bonne sur systèmes saturés</td>
+            <td>Faible à moyen</td>
+            <td>Oui, très bon candidat</td>
+          </tr>
+          <tr>
+            <td>Cache capability / inventory</td>
+            <td>Éviter les lookups répétés tant qu’aucune invalidation n’a eu lieu.</td>
+            <td>Variable</td>
+            <td>Moyen</td>
+            <td>Oui, mais souvent déjà partiellement présent</td>
+          </tr>
+          <tr>
+            <td>Time-slicing / round-robin</td>
+            <td>Étaler le travail sur plusieurs ticks au lieu de tout faire chaque tick.</td>
+            <td>Très bonne potentiellement</td>
+            <td>Élevé</td>
+            <td>Oui, mais dangereux pour le gameplay</td>
+          </tr>
+          <tr>
+            <td>Augmenter des caches TTL</td>
+            <td>Rendre certaines vues/synthèses moins fraîches mais moins coûteuses.</td>
+            <td>Bonne sur certaines vues</td>
+            <td>Moyen à élevé</td>
+            <td>Oui, mais à manier avec prudence</td>
+          </tr>
+          <tr>
+            <td>Patch du ticker générique</td>
+            <td>Réduire le coût d’un ticker central partagé par beaucoup de blocs.</td>
+            <td>Illusoire</td>
+            <td>Élevé</td>
+            <td>Oui, mais mauvaise idée ici</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>3. Candidats Create</h2>
+
+      <h3>A. Fast-path “belt vide”</h3>
+      <span class="pill good">Recommandé</span>
+      <p>
+        Dans <code>BeltInventory.tick()</code>, une grande partie du coût vient de la boucle sur les items transportés
+        et des checks funnel/tunnel/crusher/processing. Si une belt n’a ni item actif, ni insertion en attente, ni
+        suppression en attente, le tick utile est proche de zéro, mais le chemin d’entrée existe quand même.
+      </p>
+      <p>
+        <strong>Pourquoi c’est intelligent :</strong> on court-circuite un état structurellement inactif, sans toucher
+        aux belts qui transportent réellement quelque chose.
+      </p>
+      <p>
+        <strong>Risque :</strong> faible, si la condition vérifie bien <code>items</code>, <code>toInsert</code> et
+        <code>toRemove</code>.
+      </p>
+      <pre><code class="language-java">@Mixin(value = BeltInventory.class, remap = false)
+abstract class MixinBeltInventory {
+
+    @Shadow private List&lt;TransportedItemStack&gt; items;
+    @Shadow final List&lt;TransportedItemStack&gt; toInsert;
+    @Shadow final List&lt;TransportedItemStack&gt; toRemove;
+
+    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
+    private void arcadiaPatchCreate$skipCompletelyEmptyBelt(CallbackInfo ci) {
+        if (items.isEmpty() &amp;&amp; toInsert.isEmpty() &amp;&amp; toRemove.isEmpty()) {
+            ci.cancel();
+        }
+    }
+}</code></pre>
+
+      <h3>B. Fast-path “fluid pipe réellement idle”</h3>
+      <span class="pill good">Très bon candidat</span>
+      <p>
+        <code>FluidTransportBehaviour.tick()</code> est un des hotspots Create les plus cohérents dans les profils.
+        Le pattern le plus prometteur est un early-return quand :
+      </p>
+      <ul>
+        <li>la phase est déjà <code>IDLE</code>,</li>
+        <li>aucune connexion n’a de pression,</li>
+        <li>aucune connexion n’a de flow actif,</li>
+        <li>aucune animation de progression n’est en cours.</li>
+      </ul>
+      <p>
+        <strong>Pourquoi c’est intelligent :</strong> ça cible directement les pipes Create “présents mais inertes”,
+        qui correspondent bien à ton observation “blocs Create qui tournent à vide”.
+      </p>
+      <p>
+        <strong>Risque :</strong> moyen seulement, car il faut bien respecter les transitions de phase et ne pas
+        casser la reprise quand une pression arrive.
+      </p>
+      <pre><code class="language-java">@Mixin(value = FluidTransportBehaviour.class, remap = false)
+abstract class MixinFluidTransportBehaviour {
+
+    @Shadow public Map&lt;Direction, PipeConnection&gt; interfaces;
+    @Shadow public FluidTransportBehaviour.UpdatePhase phase;
+
+    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
+    private void arcadiaPatchCreate$skipTrulyIdlePipe(CallbackInfo ci) {
+        if (phase != FluidTransportBehaviour.UpdatePhase.IDLE || interfaces == null || interfaces.isEmpty()) {
+            return;
+        }
+        for (PipeConnection connection : interfaces.values()) {
+            if (connection.hasPressure() || connection.hasFlow()) {
+                return;
+            }
+        }
+        ci.cancel();
+    }
+}</code></pre>
+
+      <h3>C. Backoff d’extraction pour funnels</h3>
+      <span class="pill warn">Bon candidat, prudence moyenne</span>
+      <p>
+        <code>FunnelBlockEntity.tick()</code> revient fort dans les profils. Le point sensible n’est pas tant son tick
+        brut que les répétitions de checks quand la destination reste occupée ou pleine. Une stratégie propre est
+        d’ajouter un petit backoff après plusieurs refus consécutifs d’insertion/extraction.
+      </p>
+      <p>
+        <strong>Pourquoi c’est intelligent :</strong> ça allège les setups saturées sans ralentir celles qui tournent bien.
+      </p>
+      <p>
+        <strong>Risque :</strong> moyen, car toute logique de cooldown touche directement le ressenti d’automation.
+      </p>
+      <pre><code class="language-java">@Mixin(value = FunnelBlockEntity.class, remap = false)
+abstract class MixinFunnelBlockEntity {
+
+    @Unique private int arcadiaPatchCreate$failedExtractBackoff;
+
+    @Inject(method = "tick", at = @At("HEAD"))
+    private void arcadiaPatchCreate$decayBackoff(CallbackInfo ci) {
+        if (arcadiaPatchCreate$failedExtractBackoff &gt; 0) {
+            arcadiaPatchCreate$failedExtractBackoff--;
+        }
+    }
+
+    @Inject(method = "activateExtractor", at = @At("HEAD"), cancellable = true)
+    private void arcadiaPatchCreate$skipRepeatedFailedExtracts(CallbackInfo ci) {
+        if (arcadiaPatchCreate$failedExtractBackoff &gt; 0) {
+            ci.cancel();
+        }
+    }
+
+    // Après détection d'un refus d'insert/extract côté target, augmenter le backoff.
+}</code></pre>
+
+      <h3>D. Backoff “packager summary”</h3>
+      <span class="pill warn">Possible mais pas premier choix</span>
+      <p>
+        <code>PackagerBlockEntity.getAvailableItems()</code> et <code>LogisticsManager.getSummaryOfNetwork()</code>
+        apparaissent dans les profils, mais Create utilise déjà <code>VersionedInventoryTrackerBehaviour</code> et
+        <code>TickBasedCache</code>. On peut encore épaissir les caches ou éviter certaines synthèses répétées, mais
+        c’est plus risqué côté cohérence des stocks.
+      </p>
+      <p>
+        <strong>Conclusion :</strong> utile seulement après les fast-path belts/fluids, pas avant.
+      </p>
+
+      <h3>E. Factory Gauge / Display Link logistics fast-path</h3>
+      <span class="pill warn">Bon candidat, à valider par Spark ciblé</span>
+      <p>
+        Les <em>Factory Gauge</em> ne sont pas un simple affichage “gratuit”. Dans la source Create 6.0.9,
+        <code>FactoryGaugeDisplaySource.provideEntries()</code> parcourt les panels liés puis appelle
+        <code>FactoryPanelBehaviour.getLevelInStorage()</code> et <code>getPromised()</code> via
+        <code>createEntry()</code>, pendant que <code>DisplayLinkBlockEntity.updateGatheredData()</code> pilote la
+        collecte et l’envoi des données. Autrement dit, si une gauge semble “cumuler” du coût, le vrai travail
+        serveur est surtout dans la chaîne <code>DisplayLinkBlockEntity</code> + <code>FactoryPanelBehaviour</code>,
+        pas seulement dans le bloc visuel.
+      </p>
+      <p>
+        <strong>Pourquoi c’est crédible :</strong> ça colle à l’observation terrain, au code local Create et aux
+        patterns déjà visibles dans les profils officiels sur la partie logistics.
+      </p>
+      <p>
+        <strong>Cibles Spark à surveiller :</strong>
+      </p>
+      <ul>
+        <li><code>com.simibubi.create.content.redstone.displayLink.DisplayLinkBlockEntity.tick</code></li>
+        <li><code>com.simibubi.create.content.redstone.displayLink.DisplayLinkBlockEntity.tickSource</code></li>
+        <li><code>com.simibubi.create.content.redstone.displayLink.DisplayLinkBlockEntity.updateGatheredData</code></li>
+        <li><code>com.simibubi.create.content.redstone.displayLink.source.FactoryGaugeDisplaySource.provideEntries</code></li>
+        <li><code>com.simibubi.create.content.redstone.displayLink.source.FactoryGaugeDisplaySource.createEntry</code></li>
+        <li><code>com.simibubi.create.content.logistics.factoryBoard.FactoryPanelBehaviour.tickStorageMonitor</code></li>
+        <li><code>com.simibubi.create.content.logistics.factoryBoard.FactoryPanelBehaviour.getLevelInStorage</code></li>
+        <li><code>com.simibubi.create.content.logistics.factoryBoard.FactoryPanelBehaviour.getPromised</code></li>
+      </ul>
+      <p>
+        <strong>Patch intelligent possible :</strong> ne pas toucher au rendu global de la gauge, mais ajouter un
+        fast-path conservateur quand aucun panel lié n’existe, ou quand le support/gauge est dans un état sans
+        changement observable depuis le dernier refresh. Il faut cependant rester prudent car toute logique de cache
+        ou de refresh touche directement la cohérence visuelle et l’état des promesses logistics.
+      </p>
+      <pre><code class="language-java">@Mixin(value = DisplayLinkBlockEntity.class, remap = false)
+abstract class MixinDisplayLinkBlockEntity {
+
+    @Inject(method = "updateGatheredData", at = @At("HEAD"), cancellable = true)
+    private void arcadiaPatchCreate$skipFactoryGaugeWithoutPanels(CallbackInfo ci) {
+        if (activeSource instanceof FactoryGaugeDisplaySource
+            &amp;&amp; factoryPanelSupport.getLinkedPanels().isEmpty()) {
+            ci.cancel();
+        }
+    }
+}</code></pre>
+      <p>
+        <strong>Conclusion :</strong> à mettre dans la liste “à optimiser”, mais derrière belts et fluid pipes tant
+        qu’un Spark ciblé n’a pas confirmé la part exacte de <code>FactoryPanelBehaviour</code>.
+      </p>
+
+      <h3>F. Create Nuclear reactor idle / no-output audit</h3>
+      <span class="pill warn">Cible à investiguer sérieusement avant patch</span>
+      <p>
+        Les profils et les logs locaux confirment la présence de <code>Create Nuclear 1.3.2-beta.3</code> et font
+        apparaître au moins les classes <code>net.nuclearteam.createnuclear.content.multiblock.controller.ReactorControllerBlockEntity</code>
+        et <code>net.nuclearteam.createnuclear.content.multiblock.core.ReactorCoreEntity</code>. Ton observation en jeu
+        suggère qu’un reactor peut conserver un coût notable même dans un état ressenti comme “quasi vide” ou sans
+        débouché utile.
+      </p>
+      <p>
+        <strong>Pourquoi il faut rester prudent :</strong> un reactor qui continue à consommer ses rods et à faire
+        tourner sa logique interne n’est pas réellement idle. Sans lecture de la source NeoForge exacte du mod,
+        il serait trop risqué de proposer un fast-path arbitraire sur un multiblock nucléaire.
+      </p>
+      <p>
+        <strong>Cibles Spark à surveiller :</strong>
+      </p>
+      <ul>
+        <li><code>net.nuclearteam.createnuclear.content.multiblock.controller.ReactorControllerBlockEntity</code></li>
+        <li><code>net.nuclearteam.createnuclear.content.multiblock.core.ReactorCoreEntity</code></li>
+        <li>leurs méthodes <code>tick</code>, <code>serverTick</code>, <code>tickServer</code> ou équivalent selon la source réelle</li>
+      </ul>
+      <p>
+        <strong>Décision raisonnable à ce stade :</strong> le mettre dans “à optimiser”, mais uniquement comme sujet
+        d’audit ciblé. Le prochain pas propre est de récupérer et relire la source NeoForge correspondant à la version
+        réellement chargée avant de parler d’un Mixin.
+      </p>
+
+      <h2>4. Candidats Mekanism</h2>
+
+      <h3>A. Fast-path “aucun acceptor” sur les réseaux</h3>
+      <span class="pill good">Excellent candidat</span>
+      <p>
+        C’est la famille de patchs la plus propre côté Mekanism. Le but est de ne pas entrer dans
+        <code>tickEmit()</code> quand le réseau n’a aucun acceptor réel. C’est déjà présent nativement dans
+        <code>EnergyNetwork</code> localement, et tu l’as déjà ajouté par Mixin sur <code>FluidNetwork</code> et
+        <code>ChemicalNetwork</code>.
+      </p>
+      <p>
+        <strong>Pourquoi c’est intelligent :</strong> le gain vient directement du pattern visible dans le code :
+        scan et simulation des acceptors.
+      </p>
+      <pre><code class="language-java">@Redirect(
+    method = "onUpdate",
+    at = @At(
+        value = "INVOKE",
+        target = "Lmekanism/common/content/network/FluidNetwork;tickEmit(Lnet/neoforged/neoforge/fluids/FluidStack;)I"
+    ),
+    remap = false
+)
+private int arcadiaPatchCreate$skipEmitWithoutAcceptors(FluidNetwork instance, FluidStack stack) {
+    return instance.getAcceptorCount() == 0 ? 0 : tickEmit(stack);
+}</code></pre>
+
+      <h3>B. Throttling global de <code>TransmitterNetworkRegistry.onTick()</code></h3>
+      <span class="pill bad">Non recommandé</span>
+      <p>
+        L’idée d’étaler les réseaux sur plusieurs ticks est tentante, mais elle modifie la cadence globale de
+        propagation/transfert et peut casser le comportement attendu des réseaux. C’est un patch “rentable sur papier”
+        mais dangereux en pratique.
+      </p>
+      <p>
+        <strong>Conclusion :</strong> ne pas toucher ce point tant qu’un patch leaf-level plus sûr existe.
+      </p>
+
+      <h3>C. Fast-path “réseau vide et stable”</h3>
+      <span class="pill warn">Possible, mais secondaire</span>
+      <p>
+        En théorie, on pourrait tenter un skip sur des réseaux vraiment vides, sans buffer, sans update pending et
+        sans acceptor. En pratique, cela duplique facilement des invariants internes de <code>DynamicBufferedNetwork</code>
+        et devient plus fragile qu’un simple fast-path sur <code>tickEmit</code>.
+      </p>
+      <p>
+        <strong>Conclusion :</strong> moins bon ratio risque/gain que les patchs déjà ciblés.
+      </p>
+
+      <h2>5. Candidats Botany Pots</h2>
+
+      <h3>A. Backoff d’export quand la sortie est bouchée</h3>
+      <span class="pill good">Très bon candidat</span>
+      <p>
+        La source montre que le hopper pot tente l’export vers le bas via <code>inventoryInsert</code> à chaque
+        expiration de <code>exportCooldown</code>, puis reset le cooldown. Si le dessous reste plein, le même coût
+        se répète. Le patch le plus propre est d’ajouter un backoff quand aucun slot n’a réellement bougé.
+      </p>
+      <p>
+        <strong>Pourquoi c’est intelligent :</strong> il cible exactement la setup que tu soupçonnes sans changer la
+        logique de croissance/récolte.
+      </p>
+      <p>
+        <strong>Risque :</strong> faible à moyen, parce qu’on ralentit seulement les réessais quand ils échouent tous.
+      </p>
+      <pre><code class="language-java">@Mixin(value = BotanyPotBlockEntity.class, remap = false)
+abstract class MixinBotanyPotBlockEntity {
+
+    @Unique private int arcadiaPatchCreate$failedExportBackoff;
+
+    @Inject(method = "tickPot", at = @At("HEAD"))
+    private static void arcadiaPatchCreate$decayBackoff(Level level, BlockPos pos, BlockState state,
+            BotanyPotBlockEntity pot, CallbackInfo ci) {
+        MixinBotanyPotBlockEntity self = (MixinBotanyPotBlockEntity) (Object) pot;
+        if (self.arcadiaPatchCreate$failedExportBackoff &gt; 0) {
+            self.arcadiaPatchCreate$failedExportBackoff--;
+        }
+    }
+
+    // Dans le bloc d'export, si aucun slot n'est réellement déchargé vers le dessous,
+    // augmenter le backoff de quelques ticks.
+}</code></pre>
+
+      <h3>B. Gel de croissance quand le pot est mûr et totalement saturé</h3>
+      <span class="pill warn">Intelligent mais plus risqué</span>
+      <p>
+        Une variante plus agressive consiste à détecter un hopper pot déjà mûr, avec stockage interne plein et sortie
+        bouchée, puis à ne plus faire la boucle de croissance/récolte tant qu’aucun changement d’inventaire n’a eu lieu.
+      </p>
+      <p>
+        <strong>Valeur :</strong> potentiellement forte sur les usines saturées.
+      </p>
+      <p>
+        <strong>Risque :</strong> plus élevé, car on touche directement le cycle crop/growth et il faut éviter toute
+        désynchronisation avec un unblock ultérieur.
+      </p>
+      <p>
+        <strong>Conclusion :</strong> à tester seulement après un backoff d’export simple.
+      </p>
+
+      <h2>6. Ce qu’il ne faut pas faire</h2>
+      <ul>
+        <li>Patch global sur <code>SmartBlockEntityTicker</code> ou <code>SmartBlockEntity.tick()</code> : trop large, trop de faux positifs.</li>
+        <li>Round-robin agressif sur les réseaux Mekanism : trop risqué pour la logique de transfert.</li>
+        <li>Allonger brutalement les caches logistics Create : risque de stocks ou de routes visuellement faux.</li>
+        <li>Réactiver de vieux patches à shadow fragile juste parce qu’un hotspot existe quelque part dans la famille.</li>
+      </ul>
+
+      <h2>7. Shortlist finale</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Patch</th>
+            <th>Impact attendu</th>
+            <th>Risque</th>
+            <th>Faisabilité Mixin</th>
+            <th>Décision</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Create <code>BeltInventory</code> fast-path vide</td>
+            <td>Bon à très bon</td>
+            <td>Faible</td>
+            <td>Très élevée</td>
+            <td><strong>À faire</strong></td>
+          </tr>
+          <tr>
+            <td>Create <code>FluidTransportBehaviour</code> fast-path idle</td>
+            <td>Très bon</td>
+            <td>Moyen</td>
+            <td>Élevée</td>
+            <td><strong>À faire</strong></td>
+          </tr>
+          <tr>
+            <td>Create Nuclear reactor idle / no-output review</td>
+            <td>Inconnu mais potentiellement bon</td>
+            <td>Moyen à élevé</td>
+            <td>Moyenne</td>
+            <td><strong>À investiguer avant patch</strong></td>
+          </tr>
+          <tr>
+            <td>Create Factory Gauge / Display Link fast-path prudent</td>
+            <td>Moyen à bon si confirmé</td>
+            <td>Moyen</td>
+            <td>Élevée</td>
+            <td><strong>À faire ensuite</strong></td>
+          </tr>
+          <tr>
+            <td>Botany Pots backoff d’export bouché</td>
+            <td>Bon sur setups saturées</td>
+            <td>Faible à moyen</td>
+            <td>Élevée</td>
+            <td><strong>À faire</strong></td>
+          </tr>
+          <tr>
+            <td>Create funnels backoff d’échec</td>
+            <td>Bon</td>
+            <td>Moyen</td>
+            <td>Élevée</td>
+            <td><strong>À faire ensuite</strong></td>
+          </tr>
+          <tr>
+            <td>Mekanism registry global throttle</td>
+            <td>Fort en théorie</td>
+            <td>Élevé</td>
+            <td>Possible</td>
+            <td><strong>À éviter</strong></td>
+          </tr>
+          <tr>
+            <td>Create packager cache TTL plus long</td>
+            <td>Moyen</td>
+            <td>Moyen à élevé</td>
+            <td>Possible</td>
+            <td><strong>À traiter plus tard</strong></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>8. Conclusion</h2>
+      <div class="callout decision">
+        <strong>Conclusion nette</strong><br>
+        Les patchs les plus intelligents et réellement faisables en Mixin sont ceux qui ajoutent des fast-paths
+        sur des états stables ou des backoffs sur des sorties bouchées. Pour Arcadia, les trois meilleurs candidats
+        sont :
+      </div>
+      <ol>
+        <li><strong>Create BeltInventory fast-path vide</strong></li>
+        <li><strong>Create FluidTransportBehaviour fast-path idle</strong></li>
+        <li><strong>Botany Pots backoff d’export quand la sortie reste pleine</strong></li>
+      </ol>
+
+      <p>
+        Ces trois patchs ont le meilleur ratio <em>gain plausible / sécurité gameplay / faisabilité Mixin</em>.
+        Ils correspondent aussi beaucoup mieux à ce que montrent les profils réels que des patches plus spectaculaires
+        mais dangereux sur la logique interne des réseaux ou des ticks globaux.
+      </p>
+
+      <p>
+        Juste derrière, deux sujets doivent désormais rester dans la colonne <strong>à optimiser après validation</strong> :
+        les <strong>Factory Gauge Create</strong>, où la vraie cible semble être la chaîne
+        <code>DisplayLinkBlockEntity</code> / <code>FactoryPanelBehaviour</code>, et les
+        <strong>reactors Create Nuclear</strong>, qui montrent un coût ressenti non négligeable mais demandent encore
+        une lecture Spark ciblée sur leurs block entities avant toute proposition de patch sûre.
+      </p>
+
+      <div class="warnbox callout">
+        <strong>Si tu veux maximiser tes chances de succès</strong><br>
+        Commence par implémenter un patch Create “belt vide”, un patch Create “fluid pipe idle”, puis un patch Botany
+        Pots “failed export backoff”. Ce sont les trois patches les plus rationnels à faire avant toute tentative plus
+        ambitieuse sur les packagers, les funnels ou la planification globale des réseaux.
+      </div>
+
+      <h2>9. Références</h2>
+      <ul>
+        <li><a href="https://github.com/Creators-of-Create/Create/releases/tag/mc1.21.1-6.0.9">Create 6.0.9 release officielle</a></li>
+        <li><a href="https://github.com/Creators-of-Create/Create">Dépôt officiel Create</a></li>
+        <li><a href="https://github.com/Creators-of-Create/Create/issues/8688">Issue officielle Create #8688, exemple reconnu de lag sur travail “dans le vide”</a></li>
+        <li><a href="https://github.com/Create-Nuclear-Team/CreateNuclearFabric">Dépôt officiel Create Nuclear (hub officiel avec liens Fabric / Forge / NeoForge)</a></li>
+        <li><a href="https://github.com/mekanism/Mekanism">Dépôt officiel Mekanism</a></li>
+        <li><a href="https://github.com/Darkhax-Minecraft/BotanyPots">Dépôt officiel Botany Pots</a></li>
+      </ul>
+
+      <div class="footer">
+        Rapport rédigé à partir des profils locaux, des sources locales Mekanism, de la source officielle Create
+        clonée en <code>create-src-6.0.9</code>, des logs serveur confirmant <code>Create Nuclear 1.3.2-beta.3</code>,
+        et de la source officielle Botany Pots clonée en <code>botanypots-src-1.21.1</code>.
+      </div>
+    </section>
+  </main>
+</body>
+</html>

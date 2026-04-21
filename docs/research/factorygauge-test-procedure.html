@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Factory Gauge V2 Test Procedure</title>
+  <style>
+    :root {
+      --bg: #0b1018;
+      --bg2: #121b29;
+      --panel: rgba(18, 27, 41, 0.94);
+      --panel-2: rgba(24, 36, 56, 0.96);
+      --text: #edf3ff;
+      --muted: #a6b6d0;
+      --border: #2c3b57;
+      --accent: #7fe0b0;
+      --accent-2: #93c7ff;
+      --warn: #f3cd76;
+      --danger: #ff9f9f;
+      --ok: #9cf0bd;
+      --code: #0a0f17;
+      --shadow: 0 16px 32px rgba(0, 0, 0, 0.28);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: "Segoe UI", "Noto Sans", sans-serif;
+      line-height: 1.7;
+      background:
+        radial-gradient(circle at top left, rgba(127, 224, 176, 0.08), transparent 28%),
+        radial-gradient(circle at top right, rgba(147, 199, 255, 0.09), transparent 30%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+    }
+
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 30px 20px 72px;
+    }
+
+    h1, h2, h3 {
+      margin: 0 0 12px;
+      line-height: 1.2;
+    }
+
+    h1 { font-size: 2.15rem; }
+    h2 { font-size: 1.28rem; color: var(--accent-2); }
+    h3 { font-size: 1.04rem; }
+
+    .tag {
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(127, 224, 176, 0.35);
+      background: rgba(127, 224, 176, 0.10);
+      color: var(--accent);
+      font-size: 0.9rem;
+    }
+
+    .lede {
+      max-width: 960px;
+      color: var(--muted);
+      margin: 0 0 24px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(6px);
+    }
+
+    .subcard {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-top: 14px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    code, pre {
+      font-family: "Cascadia Code", "Consolas", monospace;
+    }
+
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-x: auto;
+      color: #ddebff;
+      background: var(--code);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    ul, ol {
+      margin: 0;
+      padding-left: 22px;
+    }
+
+    li + li {
+      margin-top: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--accent-2);
+      font-weight: 600;
+    }
+
+    .ok { color: var(--ok); font-weight: 600; }
+    .warn { color: var(--warn); font-weight: 600; }
+    .danger { color: var(--danger); font-weight: 600; }
+    .muted { color: var(--muted); }
+
+    .note {
+      border-left: 4px solid var(--warn);
+      padding-left: 14px;
+    }
+
+    .danger-note {
+      border-left: 4px solid var(--danger);
+      padding-left: 14px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="tag">Factory Gauge v2 Validation</div>
+    <h1>Procedure de test complete</h1>
+    <p class="lede">
+      Cette procedure doit etre suivie exactement dans l'ordre. Le but est d'obtenir des tests propres,
+      comparables et utilisables. Il ne faut rien improviser pendant les runs.
+    </p>
+
+    <section class="card">
+      <h2>But exact du test</h2>
+      <ul>
+        <li>Verifier que le nouveau patch <code>Factory Gauge v2</code> ne fait plus crash le serveur.</li>
+        <li>Verifier que le nouveau panel admin en inventaire fonctionne correctement.</li>
+        <li>Verifier que les modes <code>off</code>, <code>static</code> et <code>adaptive</code> changent bien le comportement.</li>
+        <li>Mesurer le gain Spark sans casser l'affichage, la redstone ou la logique du gauge.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Regles a respecter</h2>
+      <ol>
+        <li>Ne rien construire ni casser pendant un run Spark.</li>
+        <li>Ne pas changer les reglages au milieu d'un run Spark.</li>
+        <li>Ne pas ouvrir et fermer plein d'autres interfaces pendant un run Spark.</li>
+        <li>Toujours attendre 10 secondes apres un changement de mode avant de lancer Spark.</li>
+        <li>Toujours utiliser la meme commande Spark et la meme duree.</li>
+        <li>Si le serveur crash, arreter le protocole et garder les logs avant de reprendre.</li>
+      </ol>
+      <p class="danger-note">
+        Si tu changes plusieurs choses a la fois, tu perds la valeur du test.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Ce qu'il faut avoir avant de commencer</h2>
+      <ol>
+        <li>Le serveur tourne avec le bon jar.</li>
+        <li>Tu es dans la zone de test des Factory Gauge.</li>
+        <li>La zone est deja chargee et stable.</li>
+        <li>Tu as de quoi recuperer les profils Spark a la fin.</li>
+        <li>Tu as au moins ces 4 situations en jeu :</li>
+      </ol>
+      <div class="grid" style="margin-top: 14px;">
+        <div class="subcard">
+          <h3>Scenario A</h3>
+          <p class="muted">Factory Gauge simple, stable, sans Display Link ni Redstone Link.</p>
+        </div>
+        <div class="subcard">
+          <h3>Scenario B</h3>
+          <p class="muted">Factory Gauge relie a un Display Link ou affichage visible.</p>
+        </div>
+        <div class="subcard">
+          <h3>Scenario C</h3>
+          <p class="muted">Factory Gauge relie a une chaine redstone ou un Stock Link.</p>
+        </div>
+        <div class="subcard">
+          <h3>Scenario D</h3>
+          <p class="muted">Factory Gauge dans un etat qui peut reellement changer.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Commandes a utiliser</h2>
+      <pre>/arcadiapatchcreate panel
+/arcadiapatchcreate status
+/arcadiapatchcreate factoryGauge status
+/spark profiler start --timeout 60</pre>
+      <p class="note muted">
+        Les anciennes commandes texte existent toujours, mais pour ce test il faut utiliser le panel inventaire des que possible.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Comment lire le panel admin</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Slot</th>
+            <th>Item</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Belt Patch</td>
+            <td>Bloc vert ou rouge</td>
+            <td>Left click = active ou desactive le patch belt</td>
+          </tr>
+          <tr>
+            <td>Fluid Patch</td>
+            <td>Seau ou seau d'eau</td>
+            <td>Left click = active ou desactive le patch fluid</td>
+          </tr>
+          <tr>
+            <td>Factory Gauge Mode</td>
+            <td>Barrier / Clock / Comparator</td>
+            <td>Left click = cycle Off -> Static -> Adaptive</td>
+          </tr>
+          <tr>
+            <td>Factory Gauge Test Load</td>
+            <td>Repeater</td>
+            <td>Left click = cycle Off -> 35 -> 45 -> 55, Right click = sens inverse</td>
+          </tr>
+          <tr>
+            <td>Factory Gauge Status</td>
+            <td>Book</td>
+            <td>Lecture seulement</td>
+          </tr>
+          <tr>
+            <td>Admin Panel Help</td>
+            <td>Writable Book</td>
+            <td>Lecture seulement</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Etape 1 - Verifier que le panel s'ouvre</h2>
+      <ol>
+        <li>Tape exactement :
+          <pre>/arcadiapatchcreate panel</pre>
+        </li>
+        <li>Verifie qu'un inventaire s'ouvre.</li>
+        <li>Verifie que tu vois bien les items du panel.</li>
+        <li>Ferme le panel.</li>
+        <li>Tape ensuite :
+          <pre>/arcadiapatchcreate status
+/arcadiapatchcreate factoryGauge status</pre>
+        </li>
+        <li>Verifie qu'il n'y a aucune erreur serveur.</li>
+      </ol>
+      <p class="danger-note">
+        Si le panel ne s'ouvre pas ou si une erreur apparait, il ne faut pas continuer.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Etape 2 - Verifier que le panel change bien les reglages</h2>
+      <ol>
+        <li>Ouvre le panel :
+          <pre>/arcadiapatchcreate panel</pre>
+        </li>
+        <li>Clique 1 fois sur <code>Factory Gauge Mode</code>.</li>
+        <li>Ferme le panel.</li>
+        <li>Tape :
+          <pre>/arcadiapatchcreate factoryGauge status</pre>
+        </li>
+        <li>Verifie que le mode n'est plus <code>off</code>.</li>
+        <li>Rouvre le panel.</li>
+        <li>Clique plusieurs fois sur <code>Factory Gauge Mode</code> jusqu'a revenir a <code>off</code>.</li>
+        <li>Clique sur <code>Factory Gauge Test Load</code> en left click jusqu'a voir 35, puis 45, puis 55.</li>
+        <li>Fais un right click pour verifier que la valeur revient en arriere.</li>
+        <li>Ferme le panel.</li>
+        <li>Tape :
+          <pre>/arcadiapatchcreate factoryGauge status</pre>
+        </li>
+        <li>Verifie que le statut correspond exactement a ce que tu viens de faire dans le panel.</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2>Etape 3 - Baseline propre en mode Off</h2>
+      <ol>
+        <li>Ouvre le panel.</li>
+        <li>Regle <code>Factory Gauge Mode</code> sur <code>off</code>.</li>
+        <li>Regle <code>Factory Gauge Test Load</code> sur <code>Off</code>.</li>
+        <li>Ferme le panel.</li>
+        <li>Verifie :
+          <pre>/arcadiapatchcreate factoryGauge status</pre>
+        </li>
+        <li>Attends 10 secondes sans toucher a rien.</li>
+        <li>Lance :
+          <pre>/spark profiler start --timeout 60</pre>
+        </li>
+        <li>Pendant 60 secondes :
+          <ul>
+            <li>ne casse aucun bloc,</li>
+            <li>ne pose aucun bloc,</li>
+            <li>ne change aucun reglage.</li>
+          </ul>
+        </li>
+        <li>Sauvegarde le profil sous le nom :
+          <pre>factorygauge-off</pre>
+        </li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2>Etape 4 - Test Static 2</h2>
+      <ol>
+        <li>Ouvre le panel.</li>
+        <li>Clique sur <code>Factory Gauge Mode</code> jusqu'a obtenir <code>static</code>.</li>
+        <li>Si besoin, utilise les commandes texte pour confirmer :
+          <pre>/arcadiapatchcreate factoryGauge mode static 2</pre>
+        </li>
+        <li>Ferme le panel.</li>
+        <li>Verifie :
+          <pre>/arcadiapatchcreate factoryGauge status</pre>
+        </li>
+        <li>Attends 10 secondes.</li>
+        <li>Regarde les scenarios A, B, C et D.</li>
+        <li>Verifie que rien ne parait faux, gele ou en retard.</li>
+        <li>Lance :
+          <pre>/spark profiler start --timeout 60</pre>
+        </li>
+        <li>Ne touche a rien pendant le run.</li>
+        <li>Sauvegarde le profil sous :
+          <pre>factorygauge-static2</pre>
+        </li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2>Etape 5 - Test Static 3</h2>
+      <ol>
+        <li>Regle exactement :
+          <pre>/arcadiapatchcreate factoryGauge mode static 3</pre>
+        </li>
+        <li>Verifie :
+          <pre>/arcadiapatchcreate factoryGauge status</pre>
+        </li>
+        <li>Attends 10 secondes.</li>
+        <li>Regarde encore les scenarios A, B, C et D.</li>
+        <li>Lance :
+          <pre>/spark profiler start --timeout 60</pre>
+        </li>
+        <li>Ne touche a rien pendant le run.</li>
+        <li>Sauvegarde le profil sous :
+          <pre>factorygauge-static3</pre>
+        </li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2>Etape 6 - Test Static 5</h2>
+      <ol>
+        <li>Regle exactement :
+          <pre>/arcadiapatchcreate factoryGauge mode static 5</pre>
+        </li>
+        <li>Verifie :
+          <pre>/arcadiapatchcreate factoryGauge status</pre>
+        </li>
+        <li>Attends 10 secondes.</li>
+        <li>Regarde surtout les scenarios B, C et D.</li>
+        <li>Si tu vois un retard visuel ou logique, note-le tout de suite.</li>
+        <li>Lance :
+          <pre>/spark profiler start --timeout 60</pre>
+        </li>
+        <li>Sauvegarde le profil sous :
+          <pre>factorygauge-static5</pre>
+        </li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2>Etape 7 - Test Adaptive avec charges simulees</h2>
+
+      <div class="subcard">
+        <h3>Run 1 - Adaptive 35</h3>
+        <ol>
+          <li>Regle :
+            <pre>/arcadiapatchcreate factoryGauge mode adaptive
+/arcadiapatchcreate factoryGauge simulateMspt 35</pre>
+          </li>
+          <li>Verifie :
+            <pre>/arcadiapatchcreate factoryGauge status</pre>
+          </li>
+          <li>Attends 10 secondes.</li>
+          <li>Lance :
+            <pre>/spark profiler start --timeout 60</pre>
+          </li>
+          <li>Sauvegarde sous :
+            <pre>factorygauge-adaptive-35</pre>
+          </li>
+        </ol>
+      </div>
+
+      <div class="subcard">
+        <h3>Run 2 - Adaptive 45</h3>
+        <ol>
+          <li>Regle :
+            <pre>/arcadiapatchcreate factoryGauge simulateMspt 45</pre>
+          </li>
+          <li>Verifie :
+            <pre>/arcadiapatchcreate factoryGauge status</pre>
+          </li>
+          <li>Regarde encore les scenarios B, C et D.</li>
+          <li>Lance :
+            <pre>/spark profiler start --timeout 60</pre>
+          </li>
+          <li>Sauvegarde sous :
+            <pre>factorygauge-adaptive-45</pre>
+          </li>
+        </ol>
+      </div>
+
+      <div class="subcard">
+        <h3>Run 3 - Adaptive 55</h3>
+        <ol>
+          <li>Regle :
+            <pre>/arcadiapatchcreate factoryGauge simulateMspt 55</pre>
+          </li>
+          <li>Verifie :
+            <pre>/arcadiapatchcreate factoryGauge status</pre>
+          </li>
+          <li>Regarde encore les scenarios B, C et D.</li>
+          <li>Lance :
+            <pre>/spark profiler start --timeout 60</pre>
+          </li>
+          <li>Sauvegarde sous :
+            <pre>factorygauge-adaptive-55</pre>
+          </li>
+        </ol>
+      </div>
+
+      <ol start="4">
+        <li>Quand les 3 runs sont finis, retire la simulation :
+          <pre>/arcadiapatchcreate factoryGauge clearSimulatedMspt</pre>
+        </li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2>Ce qu'il faut regarder pendant chaque run</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Element</th>
+            <th>Question a se poser</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Factory Gauge simple</td>
+            <td>Est-ce que l'etat affiche reste logique ?</td>
+          </tr>
+          <tr>
+            <td>Display Link</td>
+            <td>Est-ce que l'affichage reste lisible et suit encore le changement ?</td>
+          </tr>
+          <tr>
+            <td>Stock Link / redstone</td>
+            <td>Est-ce que le signal suit encore le bon etat ?</td>
+          </tr>
+          <tr>
+            <td>Changement reel de stock</td>
+            <td>Est-ce que le gauge rattrape normalement sans gel ni rafale brutale ?</td>
+          </tr>
+          <tr>
+            <td>Serveur</td>
+            <td>Est-ce qu'il y a une erreur ou un crash dans les logs ?</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Ce qu'il faut chercher dans Spark</h2>
+      <ul>
+        <li><code>FactoryPanelBehaviour.tickStorageMonitor</code></li>
+        <li><code>FactoryPanelBehaviour.getLevelInStorage</code></li>
+        <li><code>FactoryPanelBehaviour.getRelevantSummary</code></li>
+        <li><code>LogisticsManager.getSummaryOfNetwork</code></li>
+        <li><code>RedstoneLinkBlock.tick</code></li>
+        <li><code>DisplayLinkBlockEntity.updateGatheredData</code></li>
+      </ul>
+      <p class="note muted">
+        Le bon resultat, ce n'est pas juste une baisse sur le gauge. Il faut aussi verifier que le cout ne part pas ailleurs dans la chaine.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Comment conclure</h2>
+      <ul>
+        <li><span class="ok">Valide</span> : pas de crash, pas de comportement faux, et le cout Spark baisse.</li>
+        <li><span class="warn">A resserrer</span> : gain correct, mais delai visuel ou logique perceptible en modes agressifs.</li>
+        <li><span class="danger">A rejeter</span> : crash, erreur serveur, etat faux, signal faux, ou effet de rattrapage moche.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Noms exacts des profils a garder</h2>
+      <pre>factorygauge-off
+factorygauge-static2
+factorygauge-static3
+factorygauge-static5
+factorygauge-adaptive-35
+factorygauge-adaptive-45
+factorygauge-adaptive-55</pre>
+      <p class="muted">
+        Il faut garder ces noms ou des noms tres proches, sinon la comparaison sera penible.
+      </p>
+    </section>
+  </main>
+</body>
+</html>

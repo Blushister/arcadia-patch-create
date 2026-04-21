@@ -6,8 +6,10 @@
   "mixins": [],
   "server": [
     "MixinBeltInventory",
+    "MixinChuteBlockEntity",
     "MixinFactoryPanelBehaviour",
-    "MixinFluidTransportBehaviour"
+    "MixinFluidTransportBehaviour",
+    "MixinItemEntityFastDespawn"
   ],
   "client": [],
   "injectors": {

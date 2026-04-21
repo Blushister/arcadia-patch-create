@@ -19,6 +19,9 @@ public final class FactoryGaugeThrottleSupport {
     }
 
     public static boolean shouldSkip(Object behaviour, int cooldown) {
+        if (!PatchRuntime.isFactoryGaugeEnabled()) {
+            return false;
+        }
         if (!INSPECTOR.available()) {
             return false;
         }
@@ -68,7 +71,7 @@ public final class FactoryGaugeThrottleSupport {
                 return false;
             }
 
-            int interval = PatchRuntime.resolveFactoryGaugeInterval(world.getServer());
+            int interval = PatchRuntime.resolveGlobalInterval(world.getServer());
             if (interval <= 1) {
                 PatchRuntime.incrementFactoryGaugeForcedRuns();
                 return false;
