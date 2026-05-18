@@ -5,8 +5,12 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [],
   "server": [
+    "ContinuousSeparationManifoldAccessor",
+    "MixinAbstractContraptionEntity",
     "MixinBeltInventory",
     "MixinChuteBlockEntity",
+    "MixinContraption",
+    "MixinContinuousOBBCollider",
     "MixinFactoryPanelBehaviour",
     "MixinFluidTransportBehaviour",
     "MixinItemEntityFastDespawn"
