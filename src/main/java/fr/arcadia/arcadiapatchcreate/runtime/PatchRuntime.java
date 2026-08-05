@@ -13,6 +13,10 @@ public final class PatchRuntime {
     private static final boolean FLUID_PATCH_AVAILABLE = ArcadiaMixinPlugin.isFluidTargetCompatible();
     private static final boolean HEAT_JS_PATCH_AVAILABLE = ArcadiaMixinPlugin.isHeatJsTargetCompatible();
     private static final boolean ITEM_DRAIN_PATCH_AVAILABLE = ArcadiaMixinPlugin.isItemDrainTargetCompatible();
+    private static final boolean CRAFTER_SIGNAL_AVAILABLE =
+        ArcadiaMixinPlugin.isCrafterSignalTargetCompatible();
+    private static final boolean BEHAVIOUR_DISPATCH_AVAILABLE =
+        ArcadiaMixinPlugin.isBehaviourDispatchTargetCompatible();
 
     public enum ThrottleMode {
         OFF,
@@ -27,6 +31,8 @@ public final class PatchRuntime {
     private static volatile boolean factoryGaugeEnabled = true;
     private static volatile boolean heatJsPatchEnabled = true;
     private static volatile boolean itemDrainPatchEnabled = true;
+    private static volatile boolean behaviourDispatchEnabled = true;
+    private static volatile boolean crafterSignalEnabled = true;
     private static volatile boolean createPhysicalItemsFastDespawnEnabled = false;
 
     // --- Throttle configuration ---
@@ -65,6 +71,10 @@ public final class PatchRuntime {
     private static final AtomicLong itemDrainReuses = new AtomicLong();
     private static final AtomicLong itemDrainFallbacks = new AtomicLong();
     private static final AtomicLong fluidMapCompactions = new AtomicLong();
+    private static final AtomicLong behaviourDispatches = new AtomicLong();
+    private static final AtomicLong crafterSignalReuses = new AtomicLong();
+    private static final AtomicLong crafterSignalReads = new AtomicLong();
+    private static final AtomicLong crafterSignalInvalidations = new AtomicLong();
     private static final AtomicLong createPhysicalItemMarks = new AtomicLong();
 
     private PatchRuntime() {
@@ -276,6 +286,76 @@ public final class PatchRuntime {
         return fluidMapCompactions.get();
     }
 
+    // --- SmartBlockEntity behaviour dispatch ---
+
+    public static boolean isBehaviourDispatchPatchEnabled() {
+        return masterPatchEnabled && behaviourDispatchEnabled && BEHAVIOUR_DISPATCH_AVAILABLE;
+    }
+
+    public static boolean isBehaviourDispatchPatchAvailable() {
+        return BEHAVIOUR_DISPATCH_AVAILABLE;
+    }
+
+    public static boolean isBehaviourDispatchPatchConfiguredEnabled() {
+        return behaviourDispatchEnabled;
+    }
+
+    public static void setBehaviourDispatchPatchEnabled(boolean enabled) {
+        behaviourDispatchEnabled = enabled;
+        PatchConfigStore.saveFromRuntime();
+    }
+
+    public static long incrementBehaviourDispatches() {
+        return behaviourDispatches.incrementAndGet();
+    }
+
+    public static long getBehaviourDispatches() {
+        return behaviourDispatches.get();
+    }
+
+    // --- Mechanical Crafter redstone signal cache ---
+
+    public static boolean isCrafterSignalPatchEnabled() {
+        return masterPatchEnabled && crafterSignalEnabled && CRAFTER_SIGNAL_AVAILABLE;
+    }
+
+    public static boolean isCrafterSignalPatchAvailable() {
+        return CRAFTER_SIGNAL_AVAILABLE;
+    }
+
+    public static boolean isCrafterSignalPatchConfiguredEnabled() {
+        return crafterSignalEnabled;
+    }
+
+    public static void setCrafterSignalPatchEnabled(boolean enabled) {
+        crafterSignalEnabled = enabled;
+        PatchConfigStore.saveFromRuntime();
+    }
+
+    public static long incrementCrafterSignalReuses() {
+        return crafterSignalReuses.incrementAndGet();
+    }
+
+    public static long getCrafterSignalReuses() {
+        return crafterSignalReuses.get();
+    }
+
+    public static long incrementCrafterSignalReads() {
+        return crafterSignalReads.incrementAndGet();
+    }
+
+    public static long getCrafterSignalReads() {
+        return crafterSignalReads.get();
+    }
+
+    public static long incrementCrafterSignalInvalidations() {
+        return crafterSignalInvalidations.incrementAndGet();
+    }
+
+    public static long getCrafterSignalInvalidations() {
+        return crafterSignalInvalidations.get();
+    }
+
     // --- Create Physical Items Fast Despawn ---
 
     public static boolean isCreatePhysicalItemsFastDespawnEnabled() {
@@ -444,6 +524,8 @@ public final class PatchRuntime {
         boolean factoryEnabled,
         boolean heatJsEnabled,
         boolean itemDrainEnabled,
+        boolean behaviourDispatch,
+        boolean crafterSignal,
         boolean createDropsEnabled,
         ThrottleMode throttleMode,
         int staticInterval,
@@ -455,6 +537,8 @@ public final class PatchRuntime {
         factoryGaugeEnabled = factoryEnabled;
         heatJsPatchEnabled = heatJsEnabled;
         itemDrainPatchEnabled = itemDrainEnabled;
+        behaviourDispatchEnabled = behaviourDispatch;
+        crafterSignalEnabled = crafterSignal;
         createPhysicalItemsFastDespawnEnabled = createDropsEnabled;
         globalThrottleMode = throttleMode;
         globalStaticInterval = clampInterval(staticInterval);

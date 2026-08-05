@@ -31,6 +31,8 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
         FACTORY,
         HEAT_JS,
         ITEM_DRAIN,
+        DISPATCH,
+        CRAFTER,
         DROPS,
         GLOBAL
     }
@@ -47,6 +49,8 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
     private static final int ROOT_BELT_SLOT = 18;
     private static final int ROOT_FLUID_SLOT = 19;
     private static final int ROOT_ITEM_DRAIN_SLOT = 20;
+    private static final int ROOT_DISPATCH_SLOT = 21;
+    private static final int ROOT_CRAFTER_SLOT = 22;
     private static final int ROOT_FACTORY_SLOT = 23;
     private static final int ROOT_HEAT_JS_SLOT = 24;
     private static final int ROOT_DROPS_SLOT = 25;
@@ -159,6 +163,8 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
             case FACTORY -> handleFactoryPage(slot, button, clickType, player);
             case HEAT_JS -> handleHeatJsPage(slot, player);
             case ITEM_DRAIN -> handleItemDrainPage(slot, player);
+            case DISPATCH -> handleDispatchPage(slot, player);
+            case CRAFTER -> handleCrafterPage(slot, player);
             case DROPS -> handleDropsPage(slot, button, clickType, player);
             case GLOBAL -> handleGlobalPage(slot, button, clickType, player);
             case ROOT -> {
@@ -174,6 +180,8 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
             case ROOT_FACTORY_SLOT -> { page = Page.FACTORY; message = "Opened Factory Gauge page"; }
             case ROOT_HEAT_JS_SLOT -> { page = Page.HEAT_JS; message = "Opened CreateHeatJS page"; }
             case ROOT_ITEM_DRAIN_SLOT -> { page = Page.ITEM_DRAIN; message = "Opened Item Drain page"; }
+            case ROOT_DISPATCH_SLOT -> { page = Page.DISPATCH; message = "Opened Behaviour Dispatch page"; }
+            case ROOT_CRAFTER_SLOT -> { page = Page.CRAFTER; message = "Opened Crafter Signal page"; }
             case ROOT_DROPS_SLOT   -> { page = Page.DROPS;   message = "Opened Create Drops page"; }
             case ROOT_GLOBAL_SLOT  -> { page = Page.GLOBAL;  message = "Opened Global page"; }
             case ROOT_MASTER_SLOT  -> {
@@ -225,6 +233,24 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
     private void handleItemDrainPage(int slot, ServerPlayer player) {
         if (slot == PRIMARY_SLOT) {
             PatchRuntime.setItemDrainPatchEnabled(!PatchRuntime.isItemDrainPatchConfiguredEnabled());
+            player.displayClientMessage(Component.literal(buildActionMessage(slot)).withStyle(ChatFormatting.GRAY), true);
+        } else if (slot == TERTIARY_SLOT) {
+            AdminDebugReporter.sendToPlayer(player);
+        }
+    }
+
+    private void handleDispatchPage(int slot, ServerPlayer player) {
+        if (slot == PRIMARY_SLOT) {
+            PatchRuntime.setBehaviourDispatchPatchEnabled(!PatchRuntime.isBehaviourDispatchPatchConfiguredEnabled());
+            player.displayClientMessage(Component.literal(buildActionMessage(slot)).withStyle(ChatFormatting.GRAY), true);
+        } else if (slot == TERTIARY_SLOT) {
+            AdminDebugReporter.sendToPlayer(player);
+        }
+    }
+
+    private void handleCrafterPage(int slot, ServerPlayer player) {
+        if (slot == PRIMARY_SLOT) {
+            PatchRuntime.setCrafterSignalPatchEnabled(!PatchRuntime.isCrafterSignalPatchConfiguredEnabled());
             player.displayClientMessage(Component.literal(buildActionMessage(slot)).withStyle(ChatFormatting.GRAY), true);
         } else if (slot == TERTIARY_SLOT) {
             AdminDebugReporter.sendToPlayer(player);
@@ -344,6 +370,8 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
                 case FACTORY -> "Factory Gauge patch: " + onOff(PatchRuntime.isFactoryGaugeConfiguredEnabled());
                 case HEAT_JS -> "CreateHeatJS cache: " + onOff(PatchRuntime.isHeatJsPatchConfiguredEnabled());
                 case ITEM_DRAIN -> "Item Drain reuse: " + onOff(PatchRuntime.isItemDrainPatchConfiguredEnabled());
+                case DISPATCH -> "Behaviour dispatch: " + onOff(PatchRuntime.isBehaviourDispatchPatchConfiguredEnabled());
+                case CRAFTER -> "Crafter signal cache: " + onOff(PatchRuntime.isCrafterSignalPatchConfiguredEnabled());
                 case DROPS -> "Create drops: " + onOff(PatchRuntime.isCreatePhysicalItemsFastDespawnConfiguredEnabled());
                 case GLOBAL -> "Master switch: " + onOff(PatchRuntime.isMasterPatchEnabled());
                 case ROOT -> "Panel refreshed";
@@ -355,7 +383,7 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
                 default -> "Panel refreshed";
             };
             case TERTIARY_SLOT -> switch (page) {
-                case FACTORY, HEAT_JS, ITEM_DRAIN, DROPS -> "Debug dump sent to chat";
+                case FACTORY, HEAT_JS, ITEM_DRAIN, DISPATCH, CRAFTER, DROPS -> "Debug dump sent to chat";
                 case GLOBAL -> "Simulated MSPT: " + formatSimulatedMspt();
                 default -> "Debug dump sent to chat";
             };
@@ -374,6 +402,8 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
             case FACTORY -> refreshFactory();
             case HEAT_JS -> refreshHeatJs();
             case ITEM_DRAIN -> refreshItemDrain();
+            case DISPATCH -> refreshDispatch();
+            case CRAFTER -> refreshCrafter();
             case DROPS -> refreshDrops();
             case GLOBAL -> refreshGlobal();
         }
@@ -408,7 +438,7 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
         ));
     }
 
-    private static final int MODULE_COUNT = 5;
+    private static final int MODULE_COUNT = 7;
 
     private int countEffectiveModules() {
         int count = 0;
@@ -417,6 +447,8 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
         if (PatchRuntime.isItemDrainPatchEnabled()) count++;
         if (PatchRuntime.isFactoryGaugeEnabled()) count++;
         if (PatchRuntime.isHeatJsPatchEnabled()) count++;
+        if (PatchRuntime.isBehaviourDispatchPatchEnabled()) count++;
+        if (PatchRuntime.isCrafterSignalPatchEnabled()) count++;
         return count;
     }
 
@@ -427,6 +459,8 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
         if (!PatchRuntime.isFluidPatchAvailable()) count++;
         if (!PatchRuntime.isItemDrainPatchAvailable()) count++;
         if (!PatchRuntime.isHeatJsPatchAvailable()) count++;
+        if (!PatchRuntime.isBehaviourDispatchPatchAvailable()) count++;
+        if (!PatchRuntime.isCrafterSignalPatchAvailable()) count++;
         return count;
     }
 
@@ -475,6 +509,24 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
             "Available: " + yesNo(PatchRuntime.isItemDrainPatchAvailable()),
             "Effective: " + onOff(PatchRuntime.isItemDrainPatchEnabled()),
             "Reuses: " + formatCount(PatchRuntime.getItemDrainReuses()),
+            "Left click: open page"
+        ));
+        container.setItem(ROOT_DISPATCH_SLOT, makeNavItem(
+            Items.REPEATER,
+            "Behaviour Dispatch",
+            "Configured: " + onOff(PatchRuntime.isBehaviourDispatchPatchConfiguredEnabled()),
+            "Available: " + yesNo(PatchRuntime.isBehaviourDispatchPatchAvailable()),
+            "Effective: " + onOff(PatchRuntime.isBehaviourDispatchPatchEnabled()),
+            "Ticks: " + formatCount(PatchRuntime.getBehaviourDispatches()),
+            "Left click: open page"
+        ));
+        container.setItem(ROOT_CRAFTER_SLOT, makeNavItem(
+            Items.CRAFTING_TABLE,
+            "Crafter Signal",
+            "Configured: " + onOff(PatchRuntime.isCrafterSignalPatchConfiguredEnabled()),
+            "Available: " + yesNo(PatchRuntime.isCrafterSignalPatchAvailable()),
+            "Effective: " + onOff(PatchRuntime.isCrafterSignalPatchEnabled()),
+            "Cached: " + formatCount(PatchRuntime.getCrafterSignalReuses()),
             "Left click: open page"
         ));
         container.setItem(ROOT_DROPS_SLOT, makeNavItem(
@@ -662,6 +714,72 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
             "Real execution always calls Create"
         ));
         setSectionHelp("Item Drain page", "Reuses one immediate positive simulation lookup inside a guarded frame");
+    }
+
+    private void refreshDispatch() {
+        setBack();
+        container.setItem(PRIMARY_SLOT, makeActionItem(
+            PatchRuntime.isBehaviourDispatchPatchConfiguredEnabled() ? Items.REPEATER : Items.COMPARATOR,
+            "Toggle Behaviour Dispatch",
+            "Configured: " + onOff(PatchRuntime.isBehaviourDispatchPatchConfiguredEnabled()),
+            "Available: " + yesNo(PatchRuntime.isBehaviourDispatchPatchAvailable()),
+            "Effective: " + onOff(PatchRuntime.isBehaviourDispatchPatchEnabled()),
+            "Left click: toggle"
+        ));
+        container.setItem(TERTIARY_SLOT, makeActionItem(
+            Items.WRITABLE_BOOK,
+            "Debug Dump",
+            "Send the detailed runtime status to chat",
+            "Left click: send"
+        ));
+        container.setItem(STATUS_A_SLOT, makeInfoItem(
+            Items.LECTERN,
+            "Dispatch Status",
+            "Direct ticks: " + formatCount(PatchRuntime.getBehaviourDispatches()),
+            "Skips the Consumer indirection",
+            "Same behaviours, same order"
+        ));
+        container.setItem(STATUS_B_SLOT, makeInfoItem(
+            Items.BOOK,
+            "Safety Scope",
+            "Master: " + onOff(PatchRuntime.isMasterPatchEnabled()),
+            "Verified once per session",
+            "Falls back to Create on any doubt"
+        ));
+        setSectionHelp("Behaviour Dispatch page", "Ticks Create behaviours directly, without the Consumer hop");
+    }
+
+    private void refreshCrafter() {
+        setBack();
+        container.setItem(PRIMARY_SLOT, makeActionItem(
+            PatchRuntime.isCrafterSignalPatchConfiguredEnabled() ? Items.CRAFTING_TABLE : Items.REDSTONE,
+            "Toggle Crafter Signal Cache",
+            "Configured: " + onOff(PatchRuntime.isCrafterSignalPatchConfiguredEnabled()),
+            "Available: " + yesNo(PatchRuntime.isCrafterSignalPatchAvailable()),
+            "Effective: " + onOff(PatchRuntime.isCrafterSignalPatchEnabled()),
+            "Left click: toggle"
+        ));
+        container.setItem(TERTIARY_SLOT, makeActionItem(
+            Items.WRITABLE_BOOK,
+            "Debug Dump",
+            "Send the detailed runtime status to chat",
+            "Left click: send"
+        ));
+        container.setItem(STATUS_A_SLOT, makeInfoItem(
+            Items.LECTERN,
+            "Crafter Signal Status",
+            "Cached reads: " + formatCount(PatchRuntime.getCrafterSignalReuses()),
+            "World reads: " + formatCount(PatchRuntime.getCrafterSignalReads()),
+            "Invalidations: " + formatCount(PatchRuntime.getCrafterSignalInvalidations())
+        ));
+        container.setItem(STATUS_B_SLOT, makeInfoItem(
+            Items.BOOK,
+            "Safety Scope",
+            "Master: " + onOff(PatchRuntime.isMasterPatchEnabled()),
+            "Dropped on any neighbour update",
+            "Forced refresh every 20 ticks"
+        ));
+        setSectionHelp("Crafter Signal page", "Caches the redstone read, invalidated the moment a neighbour changes");
     }
 
     private void refreshDrops() {

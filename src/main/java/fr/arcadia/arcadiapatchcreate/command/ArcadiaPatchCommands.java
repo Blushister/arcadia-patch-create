@@ -64,6 +64,20 @@ public final class ArcadiaPatchCommands {
                         .executes(context -> setItemDrainEnabled(context, PatchRuntime.isItemDrainPatchConfiguredEnabled()))
                         .then(Commands.argument("value", BoolArgumentType.bool())
                             .executes(context -> setItemDrainEnabled(context, BoolArgumentType.getBool(context, "value"))))))
+                .then(Commands.literal("dispatch")
+                    .then(Commands.literal("status")
+                        .executes(ArcadiaPatchCommands::dispatchStatus))
+                    .then(Commands.literal("enabled")
+                        .executes(context -> setDispatchEnabled(context, PatchRuntime.isBehaviourDispatchPatchConfiguredEnabled()))
+                        .then(Commands.argument("value", BoolArgumentType.bool())
+                            .executes(context -> setDispatchEnabled(context, BoolArgumentType.getBool(context, "value"))))))
+                .then(Commands.literal("crafter")
+                    .then(Commands.literal("status")
+                        .executes(ArcadiaPatchCommands::crafterStatus))
+                    .then(Commands.literal("enabled")
+                        .executes(context -> setCrafterEnabled(context, PatchRuntime.isCrafterSignalPatchConfiguredEnabled()))
+                        .then(Commands.argument("value", BoolArgumentType.bool())
+                            .executes(context -> setCrafterEnabled(context, BoolArgumentType.getBool(context, "value"))))))
                 .then(Commands.literal("createDrops")
                     .then(Commands.literal("status")
                         .executes(ArcadiaPatchCommands::createDropsStatus))
@@ -154,6 +168,14 @@ public final class ArcadiaPatchCommands {
                 + " captures=" + PatchRuntime.getItemDrainCaptures()
                 + " reuses=" + PatchRuntime.getItemDrainReuses()
                 + " fallbacks=" + PatchRuntime.getItemDrainFallbacks()
+                + " | dispatch=" + PatchRuntime.isBehaviourDispatchPatchEnabled()
+                + " available=" + PatchRuntime.isBehaviourDispatchPatchAvailable()
+                + " ticks=" + PatchRuntime.getBehaviourDispatches()
+                + " | crafter=" + PatchRuntime.isCrafterSignalPatchEnabled()
+                + " available=" + PatchRuntime.isCrafterSignalPatchAvailable()
+                + " reuses=" + PatchRuntime.getCrafterSignalReuses()
+                + " reads=" + PatchRuntime.getCrafterSignalReads()
+                + " invalidations=" + PatchRuntime.getCrafterSignalInvalidations()
                 + " | createDrops=" + PatchRuntime.isCreatePhysicalItemsFastDespawnEnabled()
                 + " despawn=" + (PatchRuntime.getCreatePhysicalItemsDespawnTicks() / 20) + "s"
                 + " marked=" + PatchRuntime.getCreatePhysicalItemMarks()
@@ -241,6 +263,30 @@ public final class ArcadiaPatchCommands {
         return 1;
     }
 
+    private static int dispatchStatus(CommandContext<CommandSourceStack> context) {
+        sendSuccess(
+            context.getSource(),
+            "Behaviour dispatch | configured=" + PatchRuntime.isBehaviourDispatchPatchConfiguredEnabled()
+                + " available=" + PatchRuntime.isBehaviourDispatchPatchAvailable()
+                + " effective=" + PatchRuntime.isBehaviourDispatchPatchEnabled()
+                + " ticks=" + PatchRuntime.getBehaviourDispatches()
+        );
+        return 1;
+    }
+
+    private static int crafterStatus(CommandContext<CommandSourceStack> context) {
+        sendSuccess(
+            context.getSource(),
+            "Crafter signal cache | configured=" + PatchRuntime.isCrafterSignalPatchConfiguredEnabled()
+                + " available=" + PatchRuntime.isCrafterSignalPatchAvailable()
+                + " effective=" + PatchRuntime.isCrafterSignalPatchEnabled()
+                + " reuses=" + PatchRuntime.getCrafterSignalReuses()
+                + " reads=" + PatchRuntime.getCrafterSignalReads()
+                + " invalidations=" + PatchRuntime.getCrafterSignalInvalidations()
+        );
+        return 1;
+    }
+
     private static int throttleStatus(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         sendSuccess(
@@ -301,6 +347,18 @@ public final class ArcadiaPatchCommands {
     private static int setItemDrainEnabled(CommandContext<CommandSourceStack> context, boolean enabled) {
         PatchRuntime.setItemDrainPatchEnabled(enabled);
         sendSuccess(context.getSource(), "Set Item Drain lookup reuse enabled=" + enabled);
+        return 1;
+    }
+
+    private static int setDispatchEnabled(CommandContext<CommandSourceStack> context, boolean enabled) {
+        PatchRuntime.setBehaviourDispatchPatchEnabled(enabled);
+        sendSuccess(context.getSource(), "Set behaviour dispatch enabled=" + enabled);
+        return 1;
+    }
+
+    private static int setCrafterEnabled(CommandContext<CommandSourceStack> context, boolean enabled) {
+        PatchRuntime.setCrafterSignalPatchEnabled(enabled);
+        sendSuccess(context.getSource(), "Set crafter signal cache enabled=" + enabled);
         return 1;
     }
 

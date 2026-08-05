@@ -29,6 +29,8 @@ public final class PatchConfigStore {
             properties.load(input);
             migrationRequired = !properties.containsKey("heatJs.enabled")
                 || !properties.containsKey("itemDrain.enabled")
+                || !properties.containsKey("behaviourDispatch.enabled")
+                || !properties.containsKey("crafterSignal.enabled")
                 || !"false".equalsIgnoreCase(properties.getProperty("chute.enabled"))
                 || !"false".equalsIgnoreCase(properties.getProperty("arm.enabled"));
             PatchRuntime.applyPersistedState(
@@ -38,6 +40,8 @@ public final class PatchConfigStore {
                 getBoolean(properties, "factoryGauge.enabled", true),
                 getBoolean(properties, "heatJs.enabled", true),
                 getBoolean(properties, "itemDrain.enabled", true),
+                getBoolean(properties, "behaviourDispatch.enabled", true),
+                getBoolean(properties, "crafterSignal.enabled", true),
                 getBoolean(properties, "createDrops.enabled", false),
                 getMode(properties.getProperty("throttle.mode", "OFF")),
                 getInt(properties, "throttle.staticInterval", 2, 1, 5),
@@ -65,6 +69,14 @@ public final class PatchConfigStore {
         properties.setProperty("factoryGauge.enabled", Boolean.toString(PatchRuntime.isFactoryGaugeConfiguredEnabled()));
         properties.setProperty("heatJs.enabled", Boolean.toString(PatchRuntime.isHeatJsPatchConfiguredEnabled()));
         properties.setProperty("itemDrain.enabled", Boolean.toString(PatchRuntime.isItemDrainPatchConfiguredEnabled()));
+        properties.setProperty(
+            "behaviourDispatch.enabled",
+            Boolean.toString(PatchRuntime.isBehaviourDispatchPatchConfiguredEnabled())
+        );
+        properties.setProperty(
+            "crafterSignal.enabled",
+            Boolean.toString(PatchRuntime.isCrafterSignalPatchConfiguredEnabled())
+        );
         // Keep the removed 1.4.3 setting explicitly disabled for rollback safety.
         properties.setProperty("arm.enabled", "false");
         // Keep the removed 1.4.2 setting explicitly disabled for rollback safety.

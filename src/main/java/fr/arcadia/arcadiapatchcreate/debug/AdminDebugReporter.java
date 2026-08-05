@@ -68,6 +68,22 @@ public final class AdminDebugReporter {
         );
         sendLine(
             source,
+            "Behaviour dispatch: configured=" + onOff(PatchRuntime.isBehaviourDispatchPatchConfiguredEnabled())
+                + " available=" + yesNo(PatchRuntime.isBehaviourDispatchPatchAvailable())
+                + " effective=" + onOff(PatchRuntime.isBehaviourDispatchPatchEnabled())
+                + " ticks=" + compact(PatchRuntime.getBehaviourDispatches())
+        );
+        sendLine(
+            source,
+            "Crafter signal: configured=" + onOff(PatchRuntime.isCrafterSignalPatchConfiguredEnabled())
+                + " available=" + yesNo(PatchRuntime.isCrafterSignalPatchAvailable())
+                + " effective=" + onOff(PatchRuntime.isCrafterSignalPatchEnabled())
+                + " reuses=" + compact(PatchRuntime.getCrafterSignalReuses())
+                + " reads=" + compact(PatchRuntime.getCrafterSignalReads())
+                + " invalidations=" + compact(PatchRuntime.getCrafterSignalInvalidations())
+        );
+        sendLine(
+            source,
             "Create Drops: configured=" + onOff(PatchRuntime.isCreatePhysicalItemsFastDespawnConfiguredEnabled())
                 + " effective=" + onOff(PatchRuntime.isCreatePhysicalItemsFastDespawnEnabled())
                 + " delay=" + (PatchRuntime.getCreatePhysicalItemsDespawnTicks() / 20) + "s"

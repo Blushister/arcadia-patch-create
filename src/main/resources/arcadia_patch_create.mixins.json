@@ -18,8 +18,11 @@
     "MixinGenericItemEmptying",
     "MixinHeatRecipeContext",
     "MixinItemDrainBlockEntity",
+    "MixinMechanicalCrafterBlock",
+    "MixinMechanicalCrafterBlockEntity",
     "MixinPipeConnectionBridge",
     "MixinRecipeManager",
+    "MixinSmartBlockEntity",
     "MixinItemEntityFastDespawn"
   ],
   "client": [],
