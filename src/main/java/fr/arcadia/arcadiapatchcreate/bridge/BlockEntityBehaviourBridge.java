@@ -8,4 +8,7 @@ public interface BlockEntityBehaviourBridge {
     Level arcadiaPatchCreate$getWorld();
 
     BlockPos arcadiaPatchCreate$getPos();
+
+    /** Calls Create's own {@code tick()} without going through a Consumer indirection. */
+    void arcadiaPatchCreate$tickBehaviour();
 }

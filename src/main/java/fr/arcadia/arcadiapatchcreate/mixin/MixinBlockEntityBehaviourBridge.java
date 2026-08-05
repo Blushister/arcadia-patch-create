@@ -17,6 +17,9 @@ public abstract class MixinBlockEntityBehaviourBridge implements BlockEntityBeha
     @Shadow
     public abstract BlockPos getPos();
 
+    @Shadow
+    public abstract void tick();
+
     @Override
     public Level arcadiaPatchCreate$getWorld() {
         return getWorld();
@@ -25,5 +28,10 @@ public abstract class MixinBlockEntityBehaviourBridge implements BlockEntityBeha
     @Override
     public BlockPos arcadiaPatchCreate$getPos() {
         return getPos();
+    }
+
+    @Override
+    public void arcadiaPatchCreate$tickBehaviour() {
+        tick();
     }
 }
