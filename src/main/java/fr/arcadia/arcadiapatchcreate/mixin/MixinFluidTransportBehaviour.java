@@ -1,12 +1,12 @@
 package fr.arcadia.arcadiapatchcreate.mixin;
 
 import fr.arcadia.arcadiapatchcreate.ArcadiaPatchCreate;
+import fr.arcadia.arcadiapatchcreate.bridge.BlockEntityBehaviourBridge;
+import fr.arcadia.arcadiapatchcreate.bridge.FluidTransportBehaviourBridge;
+import fr.arcadia.arcadiapatchcreate.bridge.PipeConnectionBridge;
+import fr.arcadia.arcadiapatchcreate.runtime.FluidInterfaceMapSupport;
 import fr.arcadia.arcadiapatchcreate.runtime.PatchRuntime;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,10 +20,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinFluidTransportBehaviour {
 
     private static final long SKIP_LOG_INTERVAL = 262_144L;
-    private static final BehaviourInspector BEHAVIOUR_INSPECTOR = BehaviourInspector.resolve();
-    private static final ConcurrentHashMap<Class<?>, ConnectionInspector> INSPECTORS = new ConcurrentHashMap<>();
-    private static final AtomicLong SKIPPED_TICKS = new AtomicLong();
-    private static final AtomicLong FAILED_INSPECTIONS = new AtomicLong();
 
     @Inject(
         method = "tick",
@@ -33,86 +29,44 @@ public abstract class MixinFluidTransportBehaviour {
             ordinal = 0
         ),
         cancellable = true,
+        require = 0,
         remap = false
     )
     private void arcadiaPatchCreate$skipTrulyIdlePipe(CallbackInfo ci) {
         if (!PatchRuntime.isFluidPatchEnabled()) {
             return;
         }
-        if (!BEHAVIOUR_INSPECTOR.available()) {
+        if (!((Object) this instanceof BlockEntityBehaviourBridge owner)
+            || !((Object) this instanceof FluidTransportBehaviourBridge transport)) {
+            recordBridgeFailure("Fluid transport bridge is unavailable");
             return;
         }
 
-        Level world;
-        BlockPos pos;
-        Map<?, ?> interfaces;
-        Object phase;
-        try {
-            world = BEHAVIOUR_INSPECTOR.getWorld(this);
-            pos = BEHAVIOUR_INSPECTOR.getPos(this);
-            interfaces = BEHAVIOUR_INSPECTOR.getInterfaces(this);
-            phase = BEHAVIOUR_INSPECTOR.getPhase(this);
-        } catch (ReflectiveOperationException e) {
-            long failures = FAILED_INSPECTIONS.incrementAndGet();
-            PatchRuntime.incrementFluidInspectionFailures();
-            if (failures <= 3 || failures % 1024 == 0) {
-                ArcadiaPatchCreate.LOGGER.warn(
-                    "[ArcadiaPatchCreate] Fluid pipe behaviour inspection failed. Falling back to Create logic.",
-                    e
-                );
-            }
+        Level world = owner.arcadiaPatchCreate$getWorld();
+        BlockPos pos = owner.arcadiaPatchCreate$getPos();
+        Map<?, ?> interfaces = transport.arcadiaPatchCreate$getInterfaces();
+        if (world == null || world.isClientSide || interfaces == null || interfaces.isEmpty()) {
             return;
         }
 
-        if (world == null || world.isClientSide) {
-            return;
-        }
-        if (interfaces == null || interfaces.isEmpty()) {
-            return;
-        }
-        if (!"IDLE".equals(String.valueOf(phase))) {
-            return;
-        }
-
+        // This invoke is reached only after Create's WAIT_FOR_PUMPS and FLIP_FLOWS returns.
         for (Object connection : interfaces.values()) {
-            if (connection == null) {
+            if (!(connection instanceof PipeConnectionBridge pipeConnection)) {
+                recordBridgeFailure("Pipe connection bridge is unavailable at " + pos);
                 return;
             }
-
-            ConnectionInspector inspector = INSPECTORS.computeIfAbsent(connection.getClass(), ConnectionInspector::resolve);
-            if (!inspector.available()) {
-                long failures = FAILED_INSPECTIONS.incrementAndGet();
-                PatchRuntime.incrementFluidInspectionFailures();
-                if (failures <= 3 || failures % 1024 == 0) {
-                    ArcadiaPatchCreate.LOGGER.warn(
-                        "[ArcadiaPatchCreate] Fluid pipe idle fast-path could not inspect {} at {}. Falling back to Create logic.",
-                        connection.getClass().getName(),
-                        pos
-                    );
-                }
-                return;
-            }
-
-            try {
-                if (inspector.hasPressure(connection) || inspector.hasFlow(connection)) {
-                    return;
-                }
-            } catch (ReflectiveOperationException e) {
-                long failures = FAILED_INSPECTIONS.incrementAndGet();
-                PatchRuntime.incrementFluidInspectionFailures();
-                if (failures <= 3 || failures % 1024 == 0) {
-                    ArcadiaPatchCreate.LOGGER.warn(
-                        "[ArcadiaPatchCreate] Fluid pipe idle inspection failed at {}. Falling back to Create logic.",
-                        pos,
-                        e
-                    );
-                }
+            if (!pipeConnection.arcadiaPatchCreate$isStandardIdleConnection()) {
                 return;
             }
         }
 
-        long skipped = SKIPPED_TICKS.incrementAndGet();
-        PatchRuntime.incrementFluidSkips();
+        // Preserve the state changes performed by PipeConnection.manageFlows()
+        // on this exact idle branch before skipping the remaining no-op loops.
+        for (Object connection : interfaces.values()) {
+            ((PipeConnectionBridge) connection).arcadiaPatchCreate$settleIdleState(world, pos);
+        }
+
+        long skipped = PatchRuntime.incrementFluidSkips();
         if (skipped <= 3 || skipped % SKIP_LOG_INTERVAL == 0) {
             ArcadiaPatchCreate.LOGGER.info(
                 "[ArcadiaPatchCreate] Skipped {} fully idle Create fluid pipe ticks. Latest position: {}",
@@ -123,73 +77,30 @@ public abstract class MixinFluidTransportBehaviour {
         ci.cancel();
     }
 
-    private record BehaviourInspector(Method getWorldMethod, Method getPosMethod, Field interfacesField, Field phaseField) {
-
-        static BehaviourInspector resolve() {
-            try {
-                Class<?> behaviourClass = Class.forName(
-                    "com.simibubi.create.content.fluids.FluidTransportBehaviour",
-                    false,
-                    MixinFluidTransportBehaviour.class.getClassLoader()
-                );
-                Method getWorld = behaviourClass.getMethod("getWorld");
-                Method getPos = behaviourClass.getMethod("getPos");
-                Field interfaces = behaviourClass.getField("interfaces");
-                Field phase = behaviourClass.getField("phase");
-                return new BehaviourInspector(getWorld, getPos, interfaces, phase);
-            } catch (ReflectiveOperationException e) {
-                ArcadiaPatchCreate.LOGGER.warn(
-                    "[ArcadiaPatchCreate] Could not resolve Create fluid behaviour members. Fluid idle fast-path will stay disabled.",
-                    e
-                );
-                return new BehaviourInspector(null, null, null, null);
-            }
-        }
-
-        boolean available() {
-            return getWorldMethod != null && getPosMethod != null && interfacesField != null && phaseField != null;
-        }
-
-        Level getWorld(Object behaviour) throws ReflectiveOperationException {
-            return (Level) getWorldMethod.invoke(behaviour);
-        }
-
-        BlockPos getPos(Object behaviour) throws ReflectiveOperationException {
-            return (BlockPos) getPosMethod.invoke(behaviour);
-        }
-
-        @SuppressWarnings("unchecked")
-        Map<?, ?> getInterfaces(Object behaviour) throws ReflectiveOperationException {
-            return (Map<?, ?>) interfacesField.get(behaviour);
-        }
-
-        Object getPhase(Object behaviour) throws ReflectiveOperationException {
-            return phaseField.get(behaviour);
-        }
+    /**
+     * Create rebuilds the connection map here and in {@code read}. Swapping it for an
+     * EnumMap once, at creation time, speeds up every later iteration - including the
+     * two passes performed by the idle fast-path above.
+     */
+    @Inject(method = "createConnectionData", at = @At("RETURN"), require = 0, remap = false)
+    private void arcadiaPatchCreate$compactCreatedInterfaces(CallbackInfo ci) {
+        FluidInterfaceMapSupport.compact(this);
     }
 
-    private record ConnectionInspector(Method hasPressureMethod, Method hasFlowMethod) {
+    @Inject(
+        method = "read(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/core/HolderLookup$Provider;Z)V",
+        at = @At("RETURN"),
+        require = 0,
+        remap = false
+    )
+    private void arcadiaPatchCreate$compactLoadedInterfaces(CallbackInfo ci) {
+        FluidInterfaceMapSupport.compact(this);
+    }
 
-        static ConnectionInspector resolve(Class<?> connectionClass) {
-            try {
-                Method hasPressure = connectionClass.getMethod("hasPressure");
-                Method hasFlow = connectionClass.getMethod("hasFlow");
-                return new ConnectionInspector(hasPressure, hasFlow);
-            } catch (ReflectiveOperationException e) {
-                return new ConnectionInspector(null, null);
-            }
-        }
-
-        boolean available() {
-            return hasPressureMethod != null && hasFlowMethod != null;
-        }
-
-        boolean hasPressure(Object connection) throws ReflectiveOperationException {
-            return (Boolean) hasPressureMethod.invoke(connection);
-        }
-
-        boolean hasFlow(Object connection) throws ReflectiveOperationException {
-            return (Boolean) hasFlowMethod.invoke(connection);
+    private static void recordBridgeFailure(String message) {
+        long failures = PatchRuntime.incrementFluidInspectionFailures();
+        if (failures <= 3 || failures % 1_024 == 0) {
+            ArcadiaPatchCreate.LOGGER.warn("[ArcadiaPatchCreate] {}. Falling back to Create logic.", message);
         }
     }
 }
