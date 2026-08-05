@@ -21,3 +21,12 @@ reports/
 *.tmp
 *.jar
 !gradle/wrapper/gradle-wrapper.jar
+
+# Internal documentation: test procedures, benchmarks, audits and server
+# analysis reports. These describe live production servers, so they stay local
+# and are never published with the mod. Only the code and the root README ship.
+docs/
+*.png
+*.jpg
+*.jpeg
+curseforge-release-*.md
