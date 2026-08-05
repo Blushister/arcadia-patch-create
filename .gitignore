@@ -9,7 +9,7 @@ log/
 crash-reports/
 crash-reports-*/
 config/
-debug/
+/debug/
 tmp/
 temp/
 local/
