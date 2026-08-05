@@ -1,22 +1,30 @@
 {
-  "required": true,
+  "required": false,
   "minVersion": "0.8",
   "package": "fr.arcadia.arcadiapatchcreate.mixin",
+  "plugin": "fr.arcadia.arcadiapatchcreate.bootstrap.ArcadiaMixinPlugin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [],
   "server": [
     "ContinuousSeparationManifoldAccessor",
     "MixinAbstractContraptionEntity",
+    "MixinArmBlockEntity",
     "MixinBeltInventory",
-    "MixinChuteBlockEntity",
+    "MixinBlockEntityBehaviourBridge",
     "MixinContraption",
     "MixinContinuousOBBCollider",
     "MixinFactoryPanelBehaviour",
     "MixinFluidTransportBehaviour",
+    "MixinFluidTransportBehaviourBridge",
+    "MixinGenericItemEmptying",
+    "MixinHeatRecipeContext",
+    "MixinItemDrainBlockEntity",
+    "MixinPipeConnectionBridge",
+    "MixinRecipeManager",
     "MixinItemEntityFastDespawn"
   ],
   "client": [],
   "injectors": {
-    "defaultRequire": 1
+    "defaultRequire": 0
   }
 }
