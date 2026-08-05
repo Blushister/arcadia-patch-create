@@ -10,25 +10,34 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
-@Mixin(targets = "com.simibubi.create.content.kinetics.belt.transport.BeltInventory", remap = false)
+@Mixin(
+    targets = "com.simibubi.create.content.kinetics.belt.transport.BeltInventory",
+    priority = 1_100,
+    remap = false
+)
 public abstract class MixinBeltInventory {
 
     @Shadow
     private List<?> items;
 
-    @Shadow
-    private List<?> toInsert;
-
-    @Shadow
-    private List<?> toRemove;
-
-    @Inject(method = "tick", at = @At("HEAD"), cancellable = true, remap = false)
+    @Inject(
+        method = "tick",
+        at = @At(
+            value = "INVOKE",
+            target = "Ljava/util/List;iterator()Ljava/util/Iterator;",
+            ordinal = 0,
+            shift = At.Shift.BEFORE
+        ),
+        cancellable = true,
+        require = 0,
+        remap = false
+    )
     private void arcadiaPatchCreate$skipEmptyBeltTick(CallbackInfo ci) {
         if (!PatchRuntime.isBeltPatchEnabled()) {
             return;
         }
-        // Empty belts still reach the server tick path even though there is no transport work to perform.
-        if (items.isEmpty() && toInsert.isEmpty() && toRemove.isEmpty()) {
+        // Create has already processed lazy-client state, pending inserts/removals and belt reversals here.
+        if (items.isEmpty()) {
             PatchRuntime.incrementBeltSkips();
             ci.cancel();
         }
