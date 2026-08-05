@@ -24,14 +24,21 @@ public final class PatchConfigStore {
         }
 
         Properties properties = new Properties();
+        boolean migrationRequired = false;
         try (InputStream input = Files.newInputStream(path)) {
             properties.load(input);
+            migrationRequired = !properties.containsKey("heatJs.enabled")
+                || !properties.containsKey("itemDrain.enabled")
+                || !properties.containsKey("arm.enabled")
+                || !"false".equalsIgnoreCase(properties.getProperty("chute.enabled"));
             PatchRuntime.applyPersistedState(
                 getBoolean(properties, "master.enabled", true),
                 getBoolean(properties, "belt.enabled", true),
                 getBoolean(properties, "fluid.enabled", true),
                 getBoolean(properties, "factoryGauge.enabled", true),
-                getBoolean(properties, "chute.enabled", true),
+                getBoolean(properties, "heatJs.enabled", true),
+                getBoolean(properties, "itemDrain.enabled", true),
+                getBoolean(properties, "arm.enabled", true),
                 getBoolean(properties, "createDrops.enabled", false),
                 getMode(properties.getProperty("throttle.mode", "OFF")),
                 getInt(properties, "throttle.staticInterval", 2, 1, 5),
@@ -43,6 +50,10 @@ public final class PatchConfigStore {
                 path,
                 e
             );
+            return;
+        }
+        if (migrationRequired) {
+            saveFromRuntime();
         }
     }
 
@@ -53,7 +64,11 @@ public final class PatchConfigStore {
         properties.setProperty("belt.enabled", Boolean.toString(PatchRuntime.isBeltPatchConfiguredEnabled()));
         properties.setProperty("fluid.enabled", Boolean.toString(PatchRuntime.isFluidPatchConfiguredEnabled()));
         properties.setProperty("factoryGauge.enabled", Boolean.toString(PatchRuntime.isFactoryGaugeConfiguredEnabled()));
-        properties.setProperty("chute.enabled", Boolean.toString(PatchRuntime.isChutePatchConfiguredEnabled()));
+        properties.setProperty("heatJs.enabled", Boolean.toString(PatchRuntime.isHeatJsPatchConfiguredEnabled()));
+        properties.setProperty("itemDrain.enabled", Boolean.toString(PatchRuntime.isItemDrainPatchConfiguredEnabled()));
+        properties.setProperty("arm.enabled", Boolean.toString(PatchRuntime.isArmPatchConfiguredEnabled()));
+        // Keep the removed 1.4.2 setting explicitly disabled for rollback safety.
+        properties.setProperty("chute.enabled", "false");
         properties.setProperty(
             "createDrops.enabled",
             Boolean.toString(PatchRuntime.isCreatePhysicalItemsFastDespawnConfiguredEnabled())

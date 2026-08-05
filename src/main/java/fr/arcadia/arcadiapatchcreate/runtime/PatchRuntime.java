@@ -1,11 +1,19 @@
 package fr.arcadia.arcadiapatchcreate.runtime;
 
+import fr.arcadia.arcadiapatchcreate.ArcadiaPatchCreate;
+import fr.arcadia.arcadiapatchcreate.bootstrap.ArcadiaMixinPlugin;
 import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 import net.minecraft.server.MinecraftServer;
 
 public final class PatchRuntime {
+
+    private static final boolean BELT_PATCH_AVAILABLE = ArcadiaMixinPlugin.isBeltTargetCompatible();
+    private static final boolean FLUID_PATCH_AVAILABLE = ArcadiaMixinPlugin.isFluidTargetCompatible();
+    private static final boolean HEAT_JS_PATCH_AVAILABLE = ArcadiaMixinPlugin.isHeatJsTargetCompatible();
+    private static final boolean ITEM_DRAIN_PATCH_AVAILABLE = ArcadiaMixinPlugin.isItemDrainTargetCompatible();
+    private static final boolean ARM_PATCH_AVAILABLE = ArcadiaMixinPlugin.isArmTargetCompatible();
 
     public enum ThrottleMode {
         OFF,
@@ -18,7 +26,9 @@ public final class PatchRuntime {
     private static volatile boolean beltPatchEnabled = true;
     private static volatile boolean fluidPatchEnabled = true;
     private static volatile boolean factoryGaugeEnabled = true;
-    private static volatile boolean chutePatchEnabled = true;
+    private static volatile boolean heatJsPatchEnabled = true;
+    private static volatile boolean itemDrainPatchEnabled = true;
+    private static volatile boolean armPatchEnabled = true;
     private static volatile boolean createPhysicalItemsFastDespawnEnabled = false;
 
     // --- Throttle configuration ---
@@ -27,9 +37,21 @@ public final class PatchRuntime {
     private static volatile Double simulatedMspt = null;
     private static volatile int createPhysicalItemsDespawnTicks = 1_200;
 
-    // --- MSPT reflection (getAverageTickTime exists at runtime via NeoForge, not in compile classpath) ---
+    // --- MSPT reflection ---
+    // The compile classpath exposes Yarn names, but the deployed server is remapped to
+    // official Mojang names, so a single hardcoded name never resolves in production.
+    // Probe every known accessor and remember the unit divisor of the one that answered.
+    private static final MsptAccessor[] MSPT_ACCESSORS = {
+        new MsptAccessor("getAverageTickTimeNanos", 1_000_000.0D), // Mojang, nanoseconds
+        new MsptAccessor("getAverageNanosPerTick", 1_000_000.0D),  // Yarn, nanoseconds
+        new MsptAccessor("getCurrentSmoothedTickTime", 1.0D),      // Mojang, milliseconds
+        new MsptAccessor("getAverageTickTime", 1.0D)               // Yarn, milliseconds
+    };
+
     private static volatile Method averageTickTimeMethod;
+    private static volatile double averageTickTimeDivisor = 1.0D;
     private static volatile boolean averageTickTimeResolved;
+    private static volatile boolean averageTickTimeFailureLogged;
 
     // --- Counters ---
     private static final AtomicLong beltSkips = new AtomicLong();
@@ -37,7 +59,17 @@ public final class PatchRuntime {
     private static final AtomicLong fluidInspectionFailures = new AtomicLong();
     private static final AtomicLong factoryGaugeSkips = new AtomicLong();
     private static final AtomicLong factoryGaugeForcedRuns = new AtomicLong();
-    private static final AtomicLong chuteProbeSkips = new AtomicLong();
+    private static final AtomicLong heatJsCacheHits = new AtomicLong();
+    private static final AtomicLong heatJsCacheMisses = new AtomicLong();
+    private static final AtomicLong heatJsCacheInvalidations = new AtomicLong();
+    private static final AtomicLong heatJsFailures = new AtomicLong();
+    private static final AtomicLong itemDrainCaptures = new AtomicLong();
+    private static final AtomicLong itemDrainReuses = new AtomicLong();
+    private static final AtomicLong itemDrainFallbacks = new AtomicLong();
+    private static final AtomicLong fluidMapCompactions = new AtomicLong();
+    private static final AtomicLong armSimulationCaptures = new AtomicLong();
+    private static final AtomicLong armSimulationReuses = new AtomicLong();
+    private static final AtomicLong armFallbacks = new AtomicLong();
     private static final AtomicLong createPhysicalItemMarks = new AtomicLong();
 
     private PatchRuntime() {
@@ -57,7 +89,11 @@ public final class PatchRuntime {
     // --- Belt ---
 
     public static boolean isBeltPatchEnabled() {
-        return masterPatchEnabled && beltPatchEnabled;
+        return masterPatchEnabled && beltPatchEnabled && BELT_PATCH_AVAILABLE;
+    }
+
+    public static boolean isBeltPatchAvailable() {
+        return BELT_PATCH_AVAILABLE;
     }
 
     public static boolean isBeltPatchConfiguredEnabled() {
@@ -80,7 +116,11 @@ public final class PatchRuntime {
     // --- Fluid ---
 
     public static boolean isFluidPatchEnabled() {
-        return masterPatchEnabled && fluidPatchEnabled;
+        return masterPatchEnabled && fluidPatchEnabled && FLUID_PATCH_AVAILABLE;
+    }
+
+    public static boolean isFluidPatchAvailable() {
+        return FLUID_PATCH_AVAILABLE;
     }
 
     public static boolean isFluidPatchConfiguredEnabled() {
@@ -139,27 +179,149 @@ public final class PatchRuntime {
         return factoryGaugeForcedRuns.get();
     }
 
-    // --- Chute ---
+    // --- CreateHeatJS recipe context ---
 
-    public static boolean isChutePatchEnabled() {
-        return masterPatchEnabled && chutePatchEnabled;
+    public static boolean isHeatJsPatchEnabled() {
+        return masterPatchEnabled && heatJsPatchEnabled && HEAT_JS_PATCH_AVAILABLE;
     }
 
-    public static boolean isChutePatchConfiguredEnabled() {
-        return chutePatchEnabled;
+    public static boolean isHeatJsPatchAvailable() {
+        return HEAT_JS_PATCH_AVAILABLE;
     }
 
-    public static void setChutePatchEnabled(boolean enabled) {
-        chutePatchEnabled = enabled;
+    public static boolean isHeatJsPatchConfiguredEnabled() {
+        return heatJsPatchEnabled;
+    }
+
+    public static void setHeatJsPatchEnabled(boolean enabled) {
+        heatJsPatchEnabled = enabled;
         PatchConfigStore.saveFromRuntime();
     }
 
-    public static long incrementChuteProbeSkips() {
-        return chuteProbeSkips.incrementAndGet();
+    public static long incrementHeatJsCacheHits() {
+        return heatJsCacheHits.incrementAndGet();
     }
 
-    public static long getChuteProbeSkips() {
-        return chuteProbeSkips.get();
+    public static long getHeatJsCacheHits() {
+        return heatJsCacheHits.get();
+    }
+
+    public static long incrementHeatJsCacheMisses() {
+        return heatJsCacheMisses.incrementAndGet();
+    }
+
+    public static long getHeatJsCacheMisses() {
+        return heatJsCacheMisses.get();
+    }
+
+    public static long incrementHeatJsCacheInvalidations() {
+        return heatJsCacheInvalidations.incrementAndGet();
+    }
+
+    public static long getHeatJsCacheInvalidations() {
+        return heatJsCacheInvalidations.get();
+    }
+
+    public static long incrementHeatJsFailures() {
+        return heatJsFailures.incrementAndGet();
+    }
+
+    public static long getHeatJsFailures() {
+        return heatJsFailures.get();
+    }
+
+    // --- Item Drain recipe lookup ---
+
+    public static boolean isItemDrainPatchEnabled() {
+        return masterPatchEnabled && itemDrainPatchEnabled && ITEM_DRAIN_PATCH_AVAILABLE;
+    }
+
+    public static boolean isItemDrainPatchAvailable() {
+        return ITEM_DRAIN_PATCH_AVAILABLE;
+    }
+
+    public static boolean isItemDrainPatchConfiguredEnabled() {
+        return itemDrainPatchEnabled;
+    }
+
+    public static void setItemDrainPatchEnabled(boolean enabled) {
+        itemDrainPatchEnabled = enabled;
+        PatchConfigStore.saveFromRuntime();
+    }
+
+    public static long incrementItemDrainCaptures() {
+        return itemDrainCaptures.incrementAndGet();
+    }
+
+    public static long getItemDrainCaptures() {
+        return itemDrainCaptures.get();
+    }
+
+    public static long incrementItemDrainReuses() {
+        return itemDrainReuses.incrementAndGet();
+    }
+
+    public static long getItemDrainReuses() {
+        return itemDrainReuses.get();
+    }
+
+    public static long incrementItemDrainFallbacks() {
+        return itemDrainFallbacks.incrementAndGet();
+    }
+
+    public static long getItemDrainFallbacks() {
+        return itemDrainFallbacks.get();
+    }
+
+    public static long incrementFluidMapCompactions() {
+        return fluidMapCompactions.incrementAndGet();
+    }
+
+    public static long getFluidMapCompactions() {
+        return fluidMapCompactions.get();
+    }
+
+    // --- Mechanical Arm output simulation reuse ---
+
+    public static boolean isArmPatchEnabled() {
+        return masterPatchEnabled && armPatchEnabled && ARM_PATCH_AVAILABLE;
+    }
+
+    public static boolean isArmPatchAvailable() {
+        return ARM_PATCH_AVAILABLE;
+    }
+
+    public static boolean isArmPatchConfiguredEnabled() {
+        return armPatchEnabled;
+    }
+
+    public static void setArmPatchEnabled(boolean enabled) {
+        armPatchEnabled = enabled;
+        PatchConfigStore.saveFromRuntime();
+    }
+
+    public static long incrementArmSimulationCaptures() {
+        return armSimulationCaptures.incrementAndGet();
+    }
+
+    public static long getArmSimulationCaptures() {
+        return armSimulationCaptures.get();
+    }
+
+    public static long incrementArmSimulationReuses() {
+        return armSimulationReuses.incrementAndGet();
+    }
+
+    public static long getArmSimulationReuses() {
+        return armSimulationReuses.get();
+    }
+
+    public static long incrementArmFallbacks() {
+        return armFallbacks.incrementAndGet();
+    }
+
+    public static long getArmFallbacks() {
+        return armFallbacks.get();
     }
 
     // --- Create Physical Items Fast Despawn ---
@@ -269,7 +431,7 @@ public final class PatchRuntime {
             if (method != null) {
                 Object value = method.invoke(server);
                 if (value instanceof Number number) {
-                    return number.doubleValue();
+                    return number.doubleValue() / averageTickTimeDivisor;
                 }
             }
         } catch (ReflectiveOperationException ignored) {
@@ -285,14 +447,40 @@ public final class PatchRuntime {
             if (averageTickTimeResolved) {
                 return averageTickTimeMethod;
             }
-            try {
-                averageTickTimeMethod = serverClass.getMethod("getAverageTickTime");
-            } catch (NoSuchMethodException ignored) {
-                averageTickTimeMethod = null;
+            for (MsptAccessor accessor : MSPT_ACCESSORS) {
+                try {
+                    Method method = serverClass.getMethod(accessor.methodName());
+                    if (Number.class.isAssignableFrom(boxed(method.getReturnType()))) {
+                        averageTickTimeMethod = method;
+                        averageTickTimeDivisor = accessor.divisor();
+                        break;
+                    }
+                } catch (NoSuchMethodException ignored) {
+                    // Try the next mapping variant.
+                }
+            }
+            if (averageTickTimeMethod == null && !averageTickTimeFailureLogged) {
+                averageTickTimeFailureLogged = true;
+                ArcadiaPatchCreate.LOGGER.warn(
+                    "[ArcadiaPatchCreate] No average tick time accessor found on {}. "
+                        + "Adaptive throttling will stay inactive; use the static mode instead.",
+                    serverClass.getName()
+                );
             }
             averageTickTimeResolved = true;
             return averageTickTimeMethod;
         }
+    }
+
+    private static Class<?> boxed(Class<?> type) {
+        if (type == float.class) return Float.class;
+        if (type == double.class) return Double.class;
+        if (type == long.class) return Long.class;
+        if (type == int.class) return Integer.class;
+        return type;
+    }
+
+    private record MsptAccessor(String methodName, double divisor) {
     }
 
     // --- Startup restore ---
@@ -302,7 +490,9 @@ public final class PatchRuntime {
         boolean beltEnabled,
         boolean fluidEnabled,
         boolean factoryEnabled,
-        boolean chuteEnabled,
+        boolean heatJsEnabled,
+        boolean itemDrainEnabled,
+        boolean armEnabled,
         boolean createDropsEnabled,
         ThrottleMode throttleMode,
         int staticInterval,
@@ -312,7 +502,9 @@ public final class PatchRuntime {
         beltPatchEnabled = beltEnabled;
         fluidPatchEnabled = fluidEnabled;
         factoryGaugeEnabled = factoryEnabled;
-        chutePatchEnabled = chuteEnabled;
+        heatJsPatchEnabled = heatJsEnabled;
+        itemDrainPatchEnabled = itemDrainEnabled;
+        armPatchEnabled = armEnabled;
         createPhysicalItemsFastDespawnEnabled = createDropsEnabled;
         globalThrottleMode = throttleMode;
         globalStaticInterval = clampInterval(staticInterval);
