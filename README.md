@@ -19,7 +19,7 @@ Project links:
 | NeoForge | `21.1.221` |
 | Create | `6.0.10` |
 | Java | `21` |
-| Mod version | `1.4.3` |
+| Mod version | `1.4.4` |
 
 Server-side only. The admin panel uses a vanilla menu type, so it works in single player and on a dedicated server
 without any client-side installation.
@@ -31,7 +31,6 @@ without any client-side installation.
 | Patch | What it removes |
 |---|---|
 | CreateHeatJS metadata cache | A full recipe-list scan on every basin heat check |
-| Mechanical Arm simulation reuse | Repeated identical output simulations within one search pass |
 | Item Drain lookup reuse | The duplicate recipe lookup inside a single processing call |
 | Fluid pipe idle fast-path | The tick of pipes with no pressure and no flow |
 | Fluid pipe connection map | Hash-table iteration over a six-entry map, four times per pipe per tick |
@@ -74,7 +73,7 @@ reopened, so nothing is ever reused across ticks.
 /arcadiapatchcreate throttle mode <mode>     off | static <interval> | adaptive
 ```
 
-Modules: `master`, `belt`, `fluid`, `factoryGauge`, `heatJs`, `itemDrain`, `arm`, `createDrops`.
+Modules: `master`, `belt`, `fluid`, `factoryGauge`, `heatJs`, `itemDrain`, `createDrops`.
 
 State is persisted to `config/arcadia-patch-create.properties` and reapplied on startup.
 
@@ -111,5 +110,6 @@ A patch is merged only when it meets all of the following:
 
 - clean server startup with and without every optional addon
 - no gameplay regression: no machine slowed, no reaction delayed, no event missed
-- a measured improvement on the targeted hotspot, verified by an A/B profile
+- a measured improvement on the targeted hotspot, verified by an A/B profile on the same server
+  with the module toggled off and on, corrected against unpatched block types as a baseline
 - a narrow blast radius and a documented fallback to the original behaviour

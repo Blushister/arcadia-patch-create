@@ -29,8 +29,8 @@ public final class PatchConfigStore {
             properties.load(input);
             migrationRequired = !properties.containsKey("heatJs.enabled")
                 || !properties.containsKey("itemDrain.enabled")
-                || !properties.containsKey("arm.enabled")
-                || !"false".equalsIgnoreCase(properties.getProperty("chute.enabled"));
+                || !"false".equalsIgnoreCase(properties.getProperty("chute.enabled"))
+                || !"false".equalsIgnoreCase(properties.getProperty("arm.enabled"));
             PatchRuntime.applyPersistedState(
                 getBoolean(properties, "master.enabled", true),
                 getBoolean(properties, "belt.enabled", true),
@@ -38,7 +38,6 @@ public final class PatchConfigStore {
                 getBoolean(properties, "factoryGauge.enabled", true),
                 getBoolean(properties, "heatJs.enabled", true),
                 getBoolean(properties, "itemDrain.enabled", true),
-                getBoolean(properties, "arm.enabled", true),
                 getBoolean(properties, "createDrops.enabled", false),
                 getMode(properties.getProperty("throttle.mode", "OFF")),
                 getInt(properties, "throttle.staticInterval", 2, 1, 5),
@@ -66,7 +65,8 @@ public final class PatchConfigStore {
         properties.setProperty("factoryGauge.enabled", Boolean.toString(PatchRuntime.isFactoryGaugeConfiguredEnabled()));
         properties.setProperty("heatJs.enabled", Boolean.toString(PatchRuntime.isHeatJsPatchConfiguredEnabled()));
         properties.setProperty("itemDrain.enabled", Boolean.toString(PatchRuntime.isItemDrainPatchConfiguredEnabled()));
-        properties.setProperty("arm.enabled", Boolean.toString(PatchRuntime.isArmPatchConfiguredEnabled()));
+        // Keep the removed 1.4.3 setting explicitly disabled for rollback safety.
+        properties.setProperty("arm.enabled", "false");
         // Keep the removed 1.4.2 setting explicitly disabled for rollback safety.
         properties.setProperty("chute.enabled", "false");
         properties.setProperty(

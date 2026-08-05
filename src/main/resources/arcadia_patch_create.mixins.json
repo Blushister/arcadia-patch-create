@@ -8,7 +8,6 @@
   "server": [
     "ContinuousSeparationManifoldAccessor",
     "MixinAbstractContraptionEntity",
-    "MixinArmBlockEntity",
     "MixinBeltInventory",
     "MixinBlockEntityBehaviourBridge",
     "MixinContraption",

@@ -64,13 +64,6 @@ public final class ArcadiaPatchCommands {
                         .executes(context -> setItemDrainEnabled(context, PatchRuntime.isItemDrainPatchConfiguredEnabled()))
                         .then(Commands.argument("value", BoolArgumentType.bool())
                             .executes(context -> setItemDrainEnabled(context, BoolArgumentType.getBool(context, "value"))))))
-                .then(Commands.literal("arm")
-                    .then(Commands.literal("status")
-                        .executes(ArcadiaPatchCommands::armStatus))
-                    .then(Commands.literal("enabled")
-                        .executes(context -> setArmEnabled(context, PatchRuntime.isArmPatchConfiguredEnabled()))
-                        .then(Commands.argument("value", BoolArgumentType.bool())
-                            .executes(context -> setArmEnabled(context, BoolArgumentType.getBool(context, "value"))))))
                 .then(Commands.literal("createDrops")
                     .then(Commands.literal("status")
                         .executes(ArcadiaPatchCommands::createDropsStatus))
@@ -161,11 +154,6 @@ public final class ArcadiaPatchCommands {
                 + " captures=" + PatchRuntime.getItemDrainCaptures()
                 + " reuses=" + PatchRuntime.getItemDrainReuses()
                 + " fallbacks=" + PatchRuntime.getItemDrainFallbacks()
-                + " | arm=" + PatchRuntime.isArmPatchEnabled()
-                + " available=" + PatchRuntime.isArmPatchAvailable()
-                + " captures=" + PatchRuntime.getArmSimulationCaptures()
-                + " reuses=" + PatchRuntime.getArmSimulationReuses()
-                + " fallbacks=" + PatchRuntime.getArmFallbacks()
                 + " | createDrops=" + PatchRuntime.isCreatePhysicalItemsFastDespawnEnabled()
                 + " despawn=" + (PatchRuntime.getCreatePhysicalItemsDespawnTicks() / 20) + "s"
                 + " marked=" + PatchRuntime.getCreatePhysicalItemMarks()
@@ -253,19 +241,6 @@ public final class ArcadiaPatchCommands {
         return 1;
     }
 
-    private static int armStatus(CommandContext<CommandSourceStack> context) {
-        sendSuccess(
-            context.getSource(),
-            "Mechanical Arm simulation reuse | configured=" + PatchRuntime.isArmPatchConfiguredEnabled()
-                + " available=" + PatchRuntime.isArmPatchAvailable()
-                + " effective=" + PatchRuntime.isArmPatchEnabled()
-                + " captures=" + PatchRuntime.getArmSimulationCaptures()
-                + " reuses=" + PatchRuntime.getArmSimulationReuses()
-                + " fallbacks=" + PatchRuntime.getArmFallbacks()
-        );
-        return 1;
-    }
-
     private static int throttleStatus(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         sendSuccess(
@@ -326,12 +301,6 @@ public final class ArcadiaPatchCommands {
     private static int setItemDrainEnabled(CommandContext<CommandSourceStack> context, boolean enabled) {
         PatchRuntime.setItemDrainPatchEnabled(enabled);
         sendSuccess(context.getSource(), "Set Item Drain lookup reuse enabled=" + enabled);
-        return 1;
-    }
-
-    private static int setArmEnabled(CommandContext<CommandSourceStack> context, boolean enabled) {
-        PatchRuntime.setArmPatchEnabled(enabled);
-        sendSuccess(context.getSource(), "Set Mechanical Arm simulation reuse enabled=" + enabled);
         return 1;
     }
 

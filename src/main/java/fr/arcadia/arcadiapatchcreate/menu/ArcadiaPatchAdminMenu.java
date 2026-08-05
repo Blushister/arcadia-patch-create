@@ -31,7 +31,6 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
         FACTORY,
         HEAT_JS,
         ITEM_DRAIN,
-        ARM,
         DROPS,
         GLOBAL
     }
@@ -48,7 +47,6 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
     private static final int ROOT_BELT_SLOT = 18;
     private static final int ROOT_FLUID_SLOT = 19;
     private static final int ROOT_ITEM_DRAIN_SLOT = 20;
-    private static final int ROOT_ARM_SLOT = 21;
     private static final int ROOT_FACTORY_SLOT = 23;
     private static final int ROOT_HEAT_JS_SLOT = 24;
     private static final int ROOT_DROPS_SLOT = 25;
@@ -161,7 +159,6 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
             case FACTORY -> handleFactoryPage(slot, button, clickType, player);
             case HEAT_JS -> handleHeatJsPage(slot, player);
             case ITEM_DRAIN -> handleItemDrainPage(slot, player);
-            case ARM -> handleArmPage(slot, player);
             case DROPS -> handleDropsPage(slot, button, clickType, player);
             case GLOBAL -> handleGlobalPage(slot, button, clickType, player);
             case ROOT -> {
@@ -177,7 +174,6 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
             case ROOT_FACTORY_SLOT -> { page = Page.FACTORY; message = "Opened Factory Gauge page"; }
             case ROOT_HEAT_JS_SLOT -> { page = Page.HEAT_JS; message = "Opened CreateHeatJS page"; }
             case ROOT_ITEM_DRAIN_SLOT -> { page = Page.ITEM_DRAIN; message = "Opened Item Drain page"; }
-            case ROOT_ARM_SLOT     -> { page = Page.ARM;     message = "Opened Mechanical Arm page"; }
             case ROOT_DROPS_SLOT   -> { page = Page.DROPS;   message = "Opened Create Drops page"; }
             case ROOT_GLOBAL_SLOT  -> { page = Page.GLOBAL;  message = "Opened Global page"; }
             case ROOT_MASTER_SLOT  -> {
@@ -229,15 +225,6 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
     private void handleItemDrainPage(int slot, ServerPlayer player) {
         if (slot == PRIMARY_SLOT) {
             PatchRuntime.setItemDrainPatchEnabled(!PatchRuntime.isItemDrainPatchConfiguredEnabled());
-            player.displayClientMessage(Component.literal(buildActionMessage(slot)).withStyle(ChatFormatting.GRAY), true);
-        } else if (slot == TERTIARY_SLOT) {
-            AdminDebugReporter.sendToPlayer(player);
-        }
-    }
-
-    private void handleArmPage(int slot, ServerPlayer player) {
-        if (slot == PRIMARY_SLOT) {
-            PatchRuntime.setArmPatchEnabled(!PatchRuntime.isArmPatchConfiguredEnabled());
             player.displayClientMessage(Component.literal(buildActionMessage(slot)).withStyle(ChatFormatting.GRAY), true);
         } else if (slot == TERTIARY_SLOT) {
             AdminDebugReporter.sendToPlayer(player);
@@ -357,7 +344,6 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
                 case FACTORY -> "Factory Gauge patch: " + onOff(PatchRuntime.isFactoryGaugeConfiguredEnabled());
                 case HEAT_JS -> "CreateHeatJS cache: " + onOff(PatchRuntime.isHeatJsPatchConfiguredEnabled());
                 case ITEM_DRAIN -> "Item Drain reuse: " + onOff(PatchRuntime.isItemDrainPatchConfiguredEnabled());
-                case ARM -> "Mechanical Arm reuse: " + onOff(PatchRuntime.isArmPatchConfiguredEnabled());
                 case DROPS -> "Create drops: " + onOff(PatchRuntime.isCreatePhysicalItemsFastDespawnConfiguredEnabled());
                 case GLOBAL -> "Master switch: " + onOff(PatchRuntime.isMasterPatchEnabled());
                 case ROOT -> "Panel refreshed";
@@ -369,7 +355,7 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
                 default -> "Panel refreshed";
             };
             case TERTIARY_SLOT -> switch (page) {
-                case FACTORY, HEAT_JS, ITEM_DRAIN, ARM, DROPS -> "Debug dump sent to chat";
+                case FACTORY, HEAT_JS, ITEM_DRAIN, DROPS -> "Debug dump sent to chat";
                 case GLOBAL -> "Simulated MSPT: " + formatSimulatedMspt();
                 default -> "Debug dump sent to chat";
             };
@@ -388,7 +374,6 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
             case FACTORY -> refreshFactory();
             case HEAT_JS -> refreshHeatJs();
             case ITEM_DRAIN -> refreshItemDrain();
-            case ARM -> refreshArm();
             case DROPS -> refreshDrops();
             case GLOBAL -> refreshGlobal();
         }
@@ -423,14 +408,13 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
         ));
     }
 
-    private static final int MODULE_COUNT = 6;
+    private static final int MODULE_COUNT = 5;
 
     private int countEffectiveModules() {
         int count = 0;
         if (PatchRuntime.isBeltPatchEnabled()) count++;
         if (PatchRuntime.isFluidPatchEnabled()) count++;
         if (PatchRuntime.isItemDrainPatchEnabled()) count++;
-        if (PatchRuntime.isArmPatchEnabled()) count++;
         if (PatchRuntime.isFactoryGaugeEnabled()) count++;
         if (PatchRuntime.isHeatJsPatchEnabled()) count++;
         return count;
@@ -442,7 +426,6 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
         if (!PatchRuntime.isBeltPatchAvailable()) count++;
         if (!PatchRuntime.isFluidPatchAvailable()) count++;
         if (!PatchRuntime.isItemDrainPatchAvailable()) count++;
-        if (!PatchRuntime.isArmPatchAvailable()) count++;
         if (!PatchRuntime.isHeatJsPatchAvailable()) count++;
         return count;
     }
@@ -492,15 +475,6 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
             "Available: " + yesNo(PatchRuntime.isItemDrainPatchAvailable()),
             "Effective: " + onOff(PatchRuntime.isItemDrainPatchEnabled()),
             "Reuses: " + formatCount(PatchRuntime.getItemDrainReuses()),
-            "Left click: open page"
-        ));
-        container.setItem(ROOT_ARM_SLOT, makeNavItem(
-            Items.PISTON,
-            "Mechanical Arm",
-            "Configured: " + onOff(PatchRuntime.isArmPatchConfiguredEnabled()),
-            "Available: " + yesNo(PatchRuntime.isArmPatchAvailable()),
-            "Effective: " + onOff(PatchRuntime.isArmPatchEnabled()),
-            "Reuses: " + formatCount(PatchRuntime.getArmSimulationReuses()),
             "Left click: open page"
         ));
         container.setItem(ROOT_DROPS_SLOT, makeNavItem(
@@ -690,39 +664,6 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
         setSectionHelp("Item Drain page", "Reuses one immediate positive simulation lookup inside a guarded frame");
     }
 
-    private void refreshArm() {
-        setBack();
-        container.setItem(PRIMARY_SLOT, makeActionItem(
-            PatchRuntime.isArmPatchConfiguredEnabled() ? Items.PISTON : Items.STICKY_PISTON,
-            "Toggle Mechanical Arm Reuse",
-            "Configured: " + onOff(PatchRuntime.isArmPatchConfiguredEnabled()),
-            "Available: " + yesNo(PatchRuntime.isArmPatchAvailable()),
-            "Effective: " + onOff(PatchRuntime.isArmPatchEnabled()),
-            "Left click: toggle"
-        ));
-        container.setItem(TERTIARY_SLOT, makeActionItem(
-            Items.WRITABLE_BOOK,
-            "Debug Dump",
-            "Send the detailed runtime status to chat",
-            "Left click: send"
-        ));
-        container.setItem(STATUS_A_SLOT, makeInfoItem(
-            Items.LECTERN,
-            "Mechanical Arm Status",
-            "Memoized stacks: " + formatCount(PatchRuntime.getArmSimulationCaptures()),
-            "Simulation reuses: " + formatCount(PatchRuntime.getArmSimulationReuses()),
-            "Fallbacks: " + formatCount(PatchRuntime.getArmFallbacks())
-        ));
-        container.setItem(STATUS_B_SLOT, makeInfoItem(
-            Items.BOOK,
-            "Safety Scope",
-            "Master: " + onOff(PatchRuntime.isMasterPatchEnabled()),
-            "Cleared at the end of every search",
-            "Never reused across ticks"
-        ));
-        setSectionHelp("Mechanical Arm page", "Reuses output simulations for identical stacks within one search pass");
-    }
-
     private void refreshDrops() {
         setBack();
         container.setItem(PRIMARY_SLOT, makeActionItem(
@@ -802,7 +743,6 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
             "Global Status 2",
             "HeatJS: " + onOff(PatchRuntime.isHeatJsPatchEnabled()),
             "Item Drain: " + onOff(PatchRuntime.isItemDrainPatchEnabled()),
-            "Arm: " + onOff(PatchRuntime.isArmPatchEnabled()),
             "Drops: " + onOff(PatchRuntime.isCreatePhysicalItemsFastDespawnEnabled()),
             "Simulated MSPT: " + formatSimulatedMspt()
         ));

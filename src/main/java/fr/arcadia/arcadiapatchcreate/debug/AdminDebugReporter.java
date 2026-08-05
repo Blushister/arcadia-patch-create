@@ -68,15 +68,6 @@ public final class AdminDebugReporter {
         );
         sendLine(
             source,
-            "Mechanical Arm: configured=" + onOff(PatchRuntime.isArmPatchConfiguredEnabled())
-                + " available=" + yesNo(PatchRuntime.isArmPatchAvailable())
-                + " effective=" + onOff(PatchRuntime.isArmPatchEnabled())
-                + " captures=" + compact(PatchRuntime.getArmSimulationCaptures())
-                + " reuses=" + compact(PatchRuntime.getArmSimulationReuses())
-                + " fallbacks=" + compact(PatchRuntime.getArmFallbacks())
-        );
-        sendLine(
-            source,
             "Create Drops: configured=" + onOff(PatchRuntime.isCreatePhysicalItemsFastDespawnConfiguredEnabled())
                 + " effective=" + onOff(PatchRuntime.isCreatePhysicalItemsFastDespawnEnabled())
                 + " delay=" + (PatchRuntime.getCreatePhysicalItemsDespawnTicks() / 20) + "s"

@@ -13,7 +13,6 @@ public final class PatchRuntime {
     private static final boolean FLUID_PATCH_AVAILABLE = ArcadiaMixinPlugin.isFluidTargetCompatible();
     private static final boolean HEAT_JS_PATCH_AVAILABLE = ArcadiaMixinPlugin.isHeatJsTargetCompatible();
     private static final boolean ITEM_DRAIN_PATCH_AVAILABLE = ArcadiaMixinPlugin.isItemDrainTargetCompatible();
-    private static final boolean ARM_PATCH_AVAILABLE = ArcadiaMixinPlugin.isArmTargetCompatible();
 
     public enum ThrottleMode {
         OFF,
@@ -28,7 +27,6 @@ public final class PatchRuntime {
     private static volatile boolean factoryGaugeEnabled = true;
     private static volatile boolean heatJsPatchEnabled = true;
     private static volatile boolean itemDrainPatchEnabled = true;
-    private static volatile boolean armPatchEnabled = true;
     private static volatile boolean createPhysicalItemsFastDespawnEnabled = false;
 
     // --- Throttle configuration ---
@@ -67,9 +65,6 @@ public final class PatchRuntime {
     private static final AtomicLong itemDrainReuses = new AtomicLong();
     private static final AtomicLong itemDrainFallbacks = new AtomicLong();
     private static final AtomicLong fluidMapCompactions = new AtomicLong();
-    private static final AtomicLong armSimulationCaptures = new AtomicLong();
-    private static final AtomicLong armSimulationReuses = new AtomicLong();
-    private static final AtomicLong armFallbacks = new AtomicLong();
     private static final AtomicLong createPhysicalItemMarks = new AtomicLong();
 
     private PatchRuntime() {
@@ -281,49 +276,6 @@ public final class PatchRuntime {
         return fluidMapCompactions.get();
     }
 
-    // --- Mechanical Arm output simulation reuse ---
-
-    public static boolean isArmPatchEnabled() {
-        return masterPatchEnabled && armPatchEnabled && ARM_PATCH_AVAILABLE;
-    }
-
-    public static boolean isArmPatchAvailable() {
-        return ARM_PATCH_AVAILABLE;
-    }
-
-    public static boolean isArmPatchConfiguredEnabled() {
-        return armPatchEnabled;
-    }
-
-    public static void setArmPatchEnabled(boolean enabled) {
-        armPatchEnabled = enabled;
-        PatchConfigStore.saveFromRuntime();
-    }
-
-    public static long incrementArmSimulationCaptures() {
-        return armSimulationCaptures.incrementAndGet();
-    }
-
-    public static long getArmSimulationCaptures() {
-        return armSimulationCaptures.get();
-    }
-
-    public static long incrementArmSimulationReuses() {
-        return armSimulationReuses.incrementAndGet();
-    }
-
-    public static long getArmSimulationReuses() {
-        return armSimulationReuses.get();
-    }
-
-    public static long incrementArmFallbacks() {
-        return armFallbacks.incrementAndGet();
-    }
-
-    public static long getArmFallbacks() {
-        return armFallbacks.get();
-    }
-
     // --- Create Physical Items Fast Despawn ---
 
     public static boolean isCreatePhysicalItemsFastDespawnEnabled() {
@@ -492,7 +444,6 @@ public final class PatchRuntime {
         boolean factoryEnabled,
         boolean heatJsEnabled,
         boolean itemDrainEnabled,
-        boolean armEnabled,
         boolean createDropsEnabled,
         ThrottleMode throttleMode,
         int staticInterval,
@@ -504,7 +455,6 @@ public final class PatchRuntime {
         factoryGaugeEnabled = factoryEnabled;
         heatJsPatchEnabled = heatJsEnabled;
         itemDrainPatchEnabled = itemDrainEnabled;
-        armPatchEnabled = armEnabled;
         createPhysicalItemsFastDespawnEnabled = createDropsEnabled;
         globalThrottleMode = throttleMode;
         globalStaticInterval = clampInterval(staticInterval);
