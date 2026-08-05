@@ -3,6 +3,7 @@ package fr.arcadia.arcadiapatchcreate;
 import fr.arcadia.arcadiapatchcreate.command.ArcadiaPatchCommands;
 import fr.arcadia.arcadiapatchcreate.runtime.CreatePhysicalItemSupport;
 import fr.arcadia.arcadiapatchcreate.runtime.PatchConfigStore;
+import fr.arcadia.arcadiapatchcreate.runtime.PatchRuntime;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
@@ -21,6 +22,14 @@ public class ArcadiaPatchCreate {
         NeoForge.EVENT_BUS.addListener(ArcadiaPatchCommands::register);
         NeoForge.EVENT_BUS.addListener(ArcadiaPatchCreate::onEntityJoinLevel);
         LOGGER.info("[ArcadiaPatchCreate] Enabled validated Create performance patches.");
+        LOGGER.info(
+            "[ArcadiaPatchCreate] Target availability: belt={}, fluid={}, createHeatJs={}, itemDrain={}, arm={}.",
+            PatchRuntime.isBeltPatchAvailable(),
+            PatchRuntime.isFluidPatchAvailable(),
+            PatchRuntime.isHeatJsPatchAvailable(),
+            PatchRuntime.isItemDrainPatchAvailable(),
+            PatchRuntime.isArmPatchAvailable()
+        );
     }
 
     private static void onEntityJoinLevel(EntityJoinLevelEvent event) {

@@ -50,13 +50,27 @@ public final class ArcadiaPatchCommands {
                         .executes(context -> setFluidEnabled(context, PatchRuntime.isFluidPatchConfiguredEnabled()))
                         .then(Commands.argument("value", BoolArgumentType.bool())
                             .executes(context -> setFluidEnabled(context, BoolArgumentType.getBool(context, "value"))))))
-                .then(Commands.literal("chute")
+                .then(Commands.literal("heatJs")
                     .then(Commands.literal("status")
-                        .executes(ArcadiaPatchCommands::chuteStatus))
+                        .executes(ArcadiaPatchCommands::heatJsStatus))
                     .then(Commands.literal("enabled")
-                        .executes(context -> setChuteEnabled(context, PatchRuntime.isChutePatchConfiguredEnabled()))
+                        .executes(context -> setHeatJsEnabled(context, PatchRuntime.isHeatJsPatchConfiguredEnabled()))
                         .then(Commands.argument("value", BoolArgumentType.bool())
-                            .executes(context -> setChuteEnabled(context, BoolArgumentType.getBool(context, "value"))))))
+                            .executes(context -> setHeatJsEnabled(context, BoolArgumentType.getBool(context, "value"))))))
+                .then(Commands.literal("itemDrain")
+                    .then(Commands.literal("status")
+                        .executes(ArcadiaPatchCommands::itemDrainStatus))
+                    .then(Commands.literal("enabled")
+                        .executes(context -> setItemDrainEnabled(context, PatchRuntime.isItemDrainPatchConfiguredEnabled()))
+                        .then(Commands.argument("value", BoolArgumentType.bool())
+                            .executes(context -> setItemDrainEnabled(context, BoolArgumentType.getBool(context, "value"))))))
+                .then(Commands.literal("arm")
+                    .then(Commands.literal("status")
+                        .executes(ArcadiaPatchCommands::armStatus))
+                    .then(Commands.literal("enabled")
+                        .executes(context -> setArmEnabled(context, PatchRuntime.isArmPatchConfiguredEnabled()))
+                        .then(Commands.argument("value", BoolArgumentType.bool())
+                            .executes(context -> setArmEnabled(context, BoolArgumentType.getBool(context, "value"))))))
                 .then(Commands.literal("createDrops")
                     .then(Commands.literal("status")
                         .executes(ArcadiaPatchCommands::createDropsStatus))
@@ -125,16 +139,33 @@ public final class ArcadiaPatchCommands {
         sendSuccess(
             source,
             "Arcadia Patch Create status | belt=" + PatchRuntime.isBeltPatchEnabled()
+                + " available=" + PatchRuntime.isBeltPatchAvailable()
                 + " master=" + PatchRuntime.isMasterPatchEnabled()
                 + " skips=" + PatchRuntime.getBeltSkips()
                 + " | fluid=" + PatchRuntime.isFluidPatchEnabled()
+                + " available=" + PatchRuntime.isFluidPatchAvailable()
                 + " skips=" + PatchRuntime.getFluidSkips()
                 + " failures=" + PatchRuntime.getFluidInspectionFailures()
+                + " compactions=" + PatchRuntime.getFluidMapCompactions()
                 + " | factoryGauge=" + PatchRuntime.isFactoryGaugeEnabled()
                 + " skips=" + PatchRuntime.getFactoryGaugeSkips()
                 + " forced=" + PatchRuntime.getFactoryGaugeForcedRuns()
-                + " | chute=" + PatchRuntime.isChutePatchEnabled()
-                + " probeSkips=" + PatchRuntime.getChuteProbeSkips()
+                + " | heatJs=" + PatchRuntime.isHeatJsPatchEnabled()
+                + " available=" + PatchRuntime.isHeatJsPatchAvailable()
+                + " hits=" + PatchRuntime.getHeatJsCacheHits()
+                + " misses=" + PatchRuntime.getHeatJsCacheMisses()
+                + " invalidations=" + PatchRuntime.getHeatJsCacheInvalidations()
+                + " failures=" + PatchRuntime.getHeatJsFailures()
+                + " | itemDrain=" + PatchRuntime.isItemDrainPatchEnabled()
+                + " available=" + PatchRuntime.isItemDrainPatchAvailable()
+                + " captures=" + PatchRuntime.getItemDrainCaptures()
+                + " reuses=" + PatchRuntime.getItemDrainReuses()
+                + " fallbacks=" + PatchRuntime.getItemDrainFallbacks()
+                + " | arm=" + PatchRuntime.isArmPatchEnabled()
+                + " available=" + PatchRuntime.isArmPatchAvailable()
+                + " captures=" + PatchRuntime.getArmSimulationCaptures()
+                + " reuses=" + PatchRuntime.getArmSimulationReuses()
+                + " fallbacks=" + PatchRuntime.getArmFallbacks()
                 + " | createDrops=" + PatchRuntime.isCreatePhysicalItemsFastDespawnEnabled()
                 + " despawn=" + (PatchRuntime.getCreatePhysicalItemsDespawnTicks() / 20) + "s"
                 + " marked=" + PatchRuntime.getCreatePhysicalItemMarks()
@@ -168,7 +199,9 @@ public final class ArcadiaPatchCommands {
     private static int beltStatus(CommandContext<CommandSourceStack> context) {
         sendSuccess(
             context.getSource(),
-            "Belt patch | enabled=" + PatchRuntime.isBeltPatchEnabled() + " skips=" + PatchRuntime.getBeltSkips()
+            "Belt patch | available=" + PatchRuntime.isBeltPatchAvailable()
+                + " enabled=" + PatchRuntime.isBeltPatchEnabled()
+                + " skips=" + PatchRuntime.getBeltSkips()
         );
         return 1;
     }
@@ -176,9 +209,11 @@ public final class ArcadiaPatchCommands {
     private static int fluidStatus(CommandContext<CommandSourceStack> context) {
         sendSuccess(
             context.getSource(),
-            "Fluid patch | enabled=" + PatchRuntime.isFluidPatchEnabled()
+            "Fluid patch | available=" + PatchRuntime.isFluidPatchAvailable()
+                + " enabled=" + PatchRuntime.isFluidPatchEnabled()
                 + " skips=" + PatchRuntime.getFluidSkips()
                 + " failures=" + PatchRuntime.getFluidInspectionFailures()
+                + " compactions=" + PatchRuntime.getFluidMapCompactions()
         );
         return 1;
     }
@@ -191,11 +226,42 @@ public final class ArcadiaPatchCommands {
         return 1;
     }
 
-    private static int chuteStatus(CommandContext<CommandSourceStack> context) {
+    private static int heatJsStatus(CommandContext<CommandSourceStack> context) {
         sendSuccess(
             context.getSource(),
-            "Chute patch | enabled=" + PatchRuntime.isChutePatchEnabled()
-                + " probeSkips=" + PatchRuntime.getChuteProbeSkips()
+            "CreateHeatJS cache | configured=" + PatchRuntime.isHeatJsPatchConfiguredEnabled()
+                + " available=" + PatchRuntime.isHeatJsPatchAvailable()
+                + " effective=" + PatchRuntime.isHeatJsPatchEnabled()
+                + " hits=" + PatchRuntime.getHeatJsCacheHits()
+                + " misses=" + PatchRuntime.getHeatJsCacheMisses()
+                + " invalidations=" + PatchRuntime.getHeatJsCacheInvalidations()
+                + " failures=" + PatchRuntime.getHeatJsFailures()
+        );
+        return 1;
+    }
+
+    private static int itemDrainStatus(CommandContext<CommandSourceStack> context) {
+        sendSuccess(
+            context.getSource(),
+            "Item Drain lookup reuse | configured=" + PatchRuntime.isItemDrainPatchConfiguredEnabled()
+                + " available=" + PatchRuntime.isItemDrainPatchAvailable()
+                + " effective=" + PatchRuntime.isItemDrainPatchEnabled()
+                + " captures=" + PatchRuntime.getItemDrainCaptures()
+                + " reuses=" + PatchRuntime.getItemDrainReuses()
+                + " fallbacks=" + PatchRuntime.getItemDrainFallbacks()
+        );
+        return 1;
+    }
+
+    private static int armStatus(CommandContext<CommandSourceStack> context) {
+        sendSuccess(
+            context.getSource(),
+            "Mechanical Arm simulation reuse | configured=" + PatchRuntime.isArmPatchConfiguredEnabled()
+                + " available=" + PatchRuntime.isArmPatchAvailable()
+                + " effective=" + PatchRuntime.isArmPatchEnabled()
+                + " captures=" + PatchRuntime.getArmSimulationCaptures()
+                + " reuses=" + PatchRuntime.getArmSimulationReuses()
+                + " fallbacks=" + PatchRuntime.getArmFallbacks()
         );
         return 1;
     }
@@ -251,9 +317,21 @@ public final class ArcadiaPatchCommands {
         return 1;
     }
 
-    private static int setChuteEnabled(CommandContext<CommandSourceStack> context, boolean enabled) {
-        PatchRuntime.setChutePatchEnabled(enabled);
-        sendSuccess(context.getSource(), "Set chute patch enabled=" + enabled);
+    private static int setHeatJsEnabled(CommandContext<CommandSourceStack> context, boolean enabled) {
+        PatchRuntime.setHeatJsPatchEnabled(enabled);
+        sendSuccess(context.getSource(), "Set CreateHeatJS cache enabled=" + enabled);
+        return 1;
+    }
+
+    private static int setItemDrainEnabled(CommandContext<CommandSourceStack> context, boolean enabled) {
+        PatchRuntime.setItemDrainPatchEnabled(enabled);
+        sendSuccess(context.getSource(), "Set Item Drain lookup reuse enabled=" + enabled);
+        return 1;
+    }
+
+    private static int setArmEnabled(CommandContext<CommandSourceStack> context, boolean enabled) {
+        PatchRuntime.setArmPatchEnabled(enabled);
+        sendSuccess(context.getSource(), "Set Mechanical Arm simulation reuse enabled=" + enabled);
         return 1;
     }
 
