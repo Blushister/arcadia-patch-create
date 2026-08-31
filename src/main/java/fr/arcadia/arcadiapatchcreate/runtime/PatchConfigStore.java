@@ -31,6 +31,8 @@ public final class PatchConfigStore {
                 || !properties.containsKey("itemDrain.enabled")
                 || !properties.containsKey("behaviourDispatch.enabled")
                 || !properties.containsKey("crafterSignal.enabled")
+                || !properties.containsKey("redstoneLink.enabled")
+                || !properties.containsKey("capabilityGuard.enabled")
                 || !"false".equalsIgnoreCase(properties.getProperty("chute.enabled"))
                 || !"false".equalsIgnoreCase(properties.getProperty("arm.enabled"));
             PatchRuntime.applyPersistedState(
@@ -42,6 +44,8 @@ public final class PatchConfigStore {
                 getBoolean(properties, "itemDrain.enabled", true),
                 getBoolean(properties, "behaviourDispatch.enabled", true),
                 getBoolean(properties, "crafterSignal.enabled", true),
+                getBoolean(properties, "redstoneLink.enabled", true),
+                getBoolean(properties, "capabilityGuard.enabled", true),
                 getBoolean(properties, "createDrops.enabled", false),
                 getMode(properties.getProperty("throttle.mode", "OFF")),
                 getInt(properties, "throttle.staticInterval", 2, 1, 5),
@@ -72,6 +76,14 @@ public final class PatchConfigStore {
         properties.setProperty(
             "behaviourDispatch.enabled",
             Boolean.toString(PatchRuntime.isBehaviourDispatchPatchConfiguredEnabled())
+        );
+        properties.setProperty(
+            "capabilityGuard.enabled",
+            Boolean.toString(PatchRuntime.isCapabilityGuardConfiguredEnabled())
+        );
+        properties.setProperty(
+            "redstoneLink.enabled",
+            Boolean.toString(PatchRuntime.isRedstoneLinkPatchConfiguredEnabled())
         );
         properties.setProperty(
             "crafterSignal.enabled",

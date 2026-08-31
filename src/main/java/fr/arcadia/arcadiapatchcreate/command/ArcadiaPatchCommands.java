@@ -78,6 +78,13 @@ public final class ArcadiaPatchCommands {
                         .executes(context -> setCrafterEnabled(context, PatchRuntime.isCrafterSignalPatchConfiguredEnabled()))
                         .then(Commands.argument("value", BoolArgumentType.bool())
                             .executes(context -> setCrafterEnabled(context, BoolArgumentType.getBool(context, "value"))))))
+                .then(Commands.literal("redstoneLink")
+                    .then(Commands.literal("status")
+                        .executes(ArcadiaPatchCommands::redstoneLinkStatus))
+                    .then(Commands.literal("enabled")
+                        .executes(context -> setRedstoneLinkEnabled(context, PatchRuntime.isRedstoneLinkPatchConfiguredEnabled()))
+                        .then(Commands.argument("value", BoolArgumentType.bool())
+                            .executes(context -> setRedstoneLinkEnabled(context, BoolArgumentType.getBool(context, "value"))))))
                 .then(Commands.literal("createDrops")
                     .then(Commands.literal("status")
                         .executes(ArcadiaPatchCommands::createDropsStatus))
@@ -176,6 +183,13 @@ public final class ArcadiaPatchCommands {
                 + " reuses=" + PatchRuntime.getCrafterSignalReuses()
                 + " reads=" + PatchRuntime.getCrafterSignalReads()
                 + " invalidations=" + PatchRuntime.getCrafterSignalInvalidations()
+                + " | redstoneLink=" + PatchRuntime.isRedstoneLinkPatchEnabled()
+                + " available=" + PatchRuntime.isRedstoneLinkPatchAvailable()
+                + " skips=" + PatchRuntime.getRedstoneLinkSkips()
+                + " sent=" + PatchRuntime.getRedstoneLinkNotifications()
+                + " | capabilityGuard=" + PatchRuntime.isCapabilityGuardEnabled()
+                + " available=" + PatchRuntime.isCapabilityGuardAvailable()
+                + " crashesPrevented=" + PatchRuntime.getCapabilityGuardCatches()
                 + " | createDrops=" + PatchRuntime.isCreatePhysicalItemsFastDespawnEnabled()
                 + " despawn=" + (PatchRuntime.getCreatePhysicalItemsDespawnTicks() / 20) + "s"
                 + " marked=" + PatchRuntime.getCreatePhysicalItemMarks()
@@ -287,6 +301,18 @@ public final class ArcadiaPatchCommands {
         return 1;
     }
 
+    private static int redstoneLinkStatus(CommandContext<CommandSourceStack> context) {
+        sendSuccess(
+            context.getSource(),
+            "Redstone Link notifications | configured=" + PatchRuntime.isRedstoneLinkPatchConfiguredEnabled()
+                + " available=" + PatchRuntime.isRedstoneLinkPatchAvailable()
+                + " effective=" + PatchRuntime.isRedstoneLinkPatchEnabled()
+                + " skipped=" + PatchRuntime.getRedstoneLinkSkips()
+                + " sent=" + PatchRuntime.getRedstoneLinkNotifications()
+        );
+        return 1;
+    }
+
     private static int throttleStatus(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         sendSuccess(
@@ -359,6 +385,12 @@ public final class ArcadiaPatchCommands {
     private static int setCrafterEnabled(CommandContext<CommandSourceStack> context, boolean enabled) {
         PatchRuntime.setCrafterSignalPatchEnabled(enabled);
         sendSuccess(context.getSource(), "Set crafter signal cache enabled=" + enabled);
+        return 1;
+    }
+
+    private static int setRedstoneLinkEnabled(CommandContext<CommandSourceStack> context, boolean enabled) {
+        PatchRuntime.setRedstoneLinkPatchEnabled(enabled);
+        sendSuccess(context.getSource(), "Set redstone link notification skip enabled=" + enabled);
         return 1;
     }
 

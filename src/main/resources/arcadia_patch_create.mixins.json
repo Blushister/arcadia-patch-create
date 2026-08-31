@@ -11,6 +11,7 @@
     "MixinBeltInventory",
     "MixinBlockEntityBehaviourBridge",
     "MixinContraption",
+    "MixinCreateBlockCapabilityCacheProvider",
     "MixinContinuousOBBCollider",
     "MixinFactoryPanelBehaviour",
     "MixinFluidTransportBehaviour",
@@ -22,6 +23,8 @@
     "MixinMechanicalCrafterBlockEntity",
     "MixinPipeConnectionBridge",
     "MixinRecipeManager",
+    "MixinRedstoneLinkBlock",
+    "MixinRedstoneLinkBlockEntityBridge",
     "MixinSmartBlockEntity",
     "MixinItemEntityFastDespawn"
   ],

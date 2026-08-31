@@ -33,6 +33,7 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
         ITEM_DRAIN,
         DISPATCH,
         CRAFTER,
+        REDSTONE_LINK,
         DROPS,
         GLOBAL
     }
@@ -51,6 +52,7 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
     private static final int ROOT_ITEM_DRAIN_SLOT = 20;
     private static final int ROOT_DISPATCH_SLOT = 21;
     private static final int ROOT_CRAFTER_SLOT = 22;
+    private static final int ROOT_REDSTONE_LINK_SLOT = 26;
     private static final int ROOT_FACTORY_SLOT = 23;
     private static final int ROOT_HEAT_JS_SLOT = 24;
     private static final int ROOT_DROPS_SLOT = 25;
@@ -165,6 +167,7 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
             case ITEM_DRAIN -> handleItemDrainPage(slot, player);
             case DISPATCH -> handleDispatchPage(slot, player);
             case CRAFTER -> handleCrafterPage(slot, player);
+            case REDSTONE_LINK -> handleRedstoneLinkPage(slot, player);
             case DROPS -> handleDropsPage(slot, button, clickType, player);
             case GLOBAL -> handleGlobalPage(slot, button, clickType, player);
             case ROOT -> {
@@ -182,6 +185,7 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
             case ROOT_ITEM_DRAIN_SLOT -> { page = Page.ITEM_DRAIN; message = "Opened Item Drain page"; }
             case ROOT_DISPATCH_SLOT -> { page = Page.DISPATCH; message = "Opened Behaviour Dispatch page"; }
             case ROOT_CRAFTER_SLOT -> { page = Page.CRAFTER; message = "Opened Crafter Signal page"; }
+            case ROOT_REDSTONE_LINK_SLOT -> { page = Page.REDSTONE_LINK; message = "Opened Redstone Link page"; }
             case ROOT_DROPS_SLOT   -> { page = Page.DROPS;   message = "Opened Create Drops page"; }
             case ROOT_GLOBAL_SLOT  -> { page = Page.GLOBAL;  message = "Opened Global page"; }
             case ROOT_MASTER_SLOT  -> {
@@ -251,6 +255,15 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
     private void handleCrafterPage(int slot, ServerPlayer player) {
         if (slot == PRIMARY_SLOT) {
             PatchRuntime.setCrafterSignalPatchEnabled(!PatchRuntime.isCrafterSignalPatchConfiguredEnabled());
+            player.displayClientMessage(Component.literal(buildActionMessage(slot)).withStyle(ChatFormatting.GRAY), true);
+        } else if (slot == TERTIARY_SLOT) {
+            AdminDebugReporter.sendToPlayer(player);
+        }
+    }
+
+    private void handleRedstoneLinkPage(int slot, ServerPlayer player) {
+        if (slot == PRIMARY_SLOT) {
+            PatchRuntime.setRedstoneLinkPatchEnabled(!PatchRuntime.isRedstoneLinkPatchConfiguredEnabled());
             player.displayClientMessage(Component.literal(buildActionMessage(slot)).withStyle(ChatFormatting.GRAY), true);
         } else if (slot == TERTIARY_SLOT) {
             AdminDebugReporter.sendToPlayer(player);
@@ -372,6 +385,7 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
                 case ITEM_DRAIN -> "Item Drain reuse: " + onOff(PatchRuntime.isItemDrainPatchConfiguredEnabled());
                 case DISPATCH -> "Behaviour dispatch: " + onOff(PatchRuntime.isBehaviourDispatchPatchConfiguredEnabled());
                 case CRAFTER -> "Crafter signal cache: " + onOff(PatchRuntime.isCrafterSignalPatchConfiguredEnabled());
+                case REDSTONE_LINK -> "Redstone link skip: " + onOff(PatchRuntime.isRedstoneLinkPatchConfiguredEnabled());
                 case DROPS -> "Create drops: " + onOff(PatchRuntime.isCreatePhysicalItemsFastDespawnConfiguredEnabled());
                 case GLOBAL -> "Master switch: " + onOff(PatchRuntime.isMasterPatchEnabled());
                 case ROOT -> "Panel refreshed";
@@ -383,7 +397,7 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
                 default -> "Panel refreshed";
             };
             case TERTIARY_SLOT -> switch (page) {
-                case FACTORY, HEAT_JS, ITEM_DRAIN, DISPATCH, CRAFTER, DROPS -> "Debug dump sent to chat";
+                case FACTORY, HEAT_JS, ITEM_DRAIN, DISPATCH, CRAFTER, REDSTONE_LINK, DROPS -> "Debug dump sent to chat";
                 case GLOBAL -> "Simulated MSPT: " + formatSimulatedMspt();
                 default -> "Debug dump sent to chat";
             };
@@ -404,6 +418,7 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
             case ITEM_DRAIN -> refreshItemDrain();
             case DISPATCH -> refreshDispatch();
             case CRAFTER -> refreshCrafter();
+            case REDSTONE_LINK -> refreshRedstoneLink();
             case DROPS -> refreshDrops();
             case GLOBAL -> refreshGlobal();
         }
@@ -438,7 +453,7 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
         ));
     }
 
-    private static final int MODULE_COUNT = 7;
+    private static final int MODULE_COUNT = 8;
 
     private int countEffectiveModules() {
         int count = 0;
@@ -449,6 +464,7 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
         if (PatchRuntime.isHeatJsPatchEnabled()) count++;
         if (PatchRuntime.isBehaviourDispatchPatchEnabled()) count++;
         if (PatchRuntime.isCrafterSignalPatchEnabled()) count++;
+        if (PatchRuntime.isRedstoneLinkPatchEnabled()) count++;
         return count;
     }
 
@@ -461,6 +477,7 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
         if (!PatchRuntime.isHeatJsPatchAvailable()) count++;
         if (!PatchRuntime.isBehaviourDispatchPatchAvailable()) count++;
         if (!PatchRuntime.isCrafterSignalPatchAvailable()) count++;
+        if (!PatchRuntime.isRedstoneLinkPatchAvailable()) count++;
         return count;
     }
 
@@ -527,6 +544,15 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
             "Available: " + yesNo(PatchRuntime.isCrafterSignalPatchAvailable()),
             "Effective: " + onOff(PatchRuntime.isCrafterSignalPatchEnabled()),
             "Cached: " + formatCount(PatchRuntime.getCrafterSignalReuses()),
+            "Left click: open page"
+        ));
+        container.setItem(ROOT_REDSTONE_LINK_SLOT, makeNavItem(
+            Items.REDSTONE_TORCH,
+            "Redstone Link",
+            "Configured: " + onOff(PatchRuntime.isRedstoneLinkPatchConfiguredEnabled()),
+            "Available: " + yesNo(PatchRuntime.isRedstoneLinkPatchAvailable()),
+            "Effective: " + onOff(PatchRuntime.isRedstoneLinkPatchEnabled()),
+            "Skipped: " + formatCount(PatchRuntime.getRedstoneLinkSkips()),
             "Left click: open page"
         ));
         container.setItem(ROOT_DROPS_SLOT, makeNavItem(
@@ -780,6 +806,39 @@ public class ArcadiaPatchAdminMenu extends AbstractContainerMenu {
             "Forced refresh every 20 ticks"
         ));
         setSectionHelp("Crafter Signal page", "Caches the redstone read, invalidated the moment a neighbour changes");
+    }
+
+    private void refreshRedstoneLink() {
+        setBack();
+        container.setItem(PRIMARY_SLOT, makeActionItem(
+            PatchRuntime.isRedstoneLinkPatchConfiguredEnabled() ? Items.REDSTONE_TORCH : Items.LEVER,
+            "Toggle Redstone Link Skip",
+            "Configured: " + onOff(PatchRuntime.isRedstoneLinkPatchConfiguredEnabled()),
+            "Available: " + yesNo(PatchRuntime.isRedstoneLinkPatchAvailable()),
+            "Effective: " + onOff(PatchRuntime.isRedstoneLinkPatchEnabled()),
+            "Left click: toggle"
+        ));
+        container.setItem(TERTIARY_SLOT, makeActionItem(
+            Items.WRITABLE_BOOK,
+            "Debug Dump",
+            "Send the detailed runtime status to chat",
+            "Left click: send"
+        ));
+        container.setItem(STATUS_A_SLOT, makeInfoItem(
+            Items.LECTERN,
+            "Redstone Link Status",
+            "Skipped: " + formatCount(PatchRuntime.getRedstoneLinkSkips()),
+            "Sent: " + formatCount(PatchRuntime.getRedstoneLinkNotifications()),
+            "Skipped only when nothing changed"
+        ));
+        container.setItem(STATUS_B_SLOT, makeInfoItem(
+            Items.BOOK,
+            "Safety Scope",
+            "Master: " + onOff(PatchRuntime.isMasterPatchEnabled()),
+            "Signal and block state compared",
+            "Any real change notifies at once"
+        ));
+        setSectionHelp("Redstone Link page", "Skips neighbour notifications when the signal did not move");
     }
 
     private void refreshDrops() {

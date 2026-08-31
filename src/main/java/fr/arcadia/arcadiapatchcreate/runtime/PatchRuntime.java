@@ -13,6 +13,10 @@ public final class PatchRuntime {
     private static final boolean FLUID_PATCH_AVAILABLE = ArcadiaMixinPlugin.isFluidTargetCompatible();
     private static final boolean HEAT_JS_PATCH_AVAILABLE = ArcadiaMixinPlugin.isHeatJsTargetCompatible();
     private static final boolean ITEM_DRAIN_PATCH_AVAILABLE = ArcadiaMixinPlugin.isItemDrainTargetCompatible();
+    private static final boolean CAPABILITY_GUARD_AVAILABLE =
+        ArcadiaMixinPlugin.isCapabilityGuardTargetCompatible();
+    private static final boolean REDSTONE_LINK_AVAILABLE =
+        ArcadiaMixinPlugin.isRedstoneLinkTargetCompatible();
     private static final boolean CRAFTER_SIGNAL_AVAILABLE =
         ArcadiaMixinPlugin.isCrafterSignalTargetCompatible();
     private static final boolean BEHAVIOUR_DISPATCH_AVAILABLE =
@@ -33,6 +37,8 @@ public final class PatchRuntime {
     private static volatile boolean itemDrainPatchEnabled = true;
     private static volatile boolean behaviourDispatchEnabled = true;
     private static volatile boolean crafterSignalEnabled = true;
+    private static volatile boolean redstoneLinkEnabled = true;
+    private static volatile boolean capabilityGuardEnabled = true;
     private static volatile boolean createPhysicalItemsFastDespawnEnabled = false;
 
     // --- Throttle configuration ---
@@ -72,6 +78,9 @@ public final class PatchRuntime {
     private static final AtomicLong itemDrainFallbacks = new AtomicLong();
     private static final AtomicLong fluidMapCompactions = new AtomicLong();
     private static final AtomicLong behaviourDispatches = new AtomicLong();
+    private static final AtomicLong capabilityGuardCatches = new AtomicLong();
+    private static final AtomicLong redstoneLinkSkips = new AtomicLong();
+    private static final AtomicLong redstoneLinkNotifications = new AtomicLong();
     private static final AtomicLong crafterSignalReuses = new AtomicLong();
     private static final AtomicLong crafterSignalReads = new AtomicLong();
     private static final AtomicLong crafterSignalInvalidations = new AtomicLong();
@@ -356,6 +365,68 @@ public final class PatchRuntime {
         return crafterSignalInvalidations.get();
     }
 
+    // --- Redstone Link neighbour notification ---
+
+    public static boolean isRedstoneLinkPatchEnabled() {
+        return masterPatchEnabled && redstoneLinkEnabled && REDSTONE_LINK_AVAILABLE;
+    }
+
+    public static boolean isRedstoneLinkPatchAvailable() {
+        return REDSTONE_LINK_AVAILABLE;
+    }
+
+    public static boolean isRedstoneLinkPatchConfiguredEnabled() {
+        return redstoneLinkEnabled;
+    }
+
+    public static void setRedstoneLinkPatchEnabled(boolean enabled) {
+        redstoneLinkEnabled = enabled;
+        PatchConfigStore.saveFromRuntime();
+    }
+
+    public static long incrementRedstoneLinkSkips() {
+        return redstoneLinkSkips.incrementAndGet();
+    }
+
+    public static long getRedstoneLinkSkips() {
+        return redstoneLinkSkips.get();
+    }
+
+    public static long incrementRedstoneLinkNotifications() {
+        return redstoneLinkNotifications.incrementAndGet();
+    }
+
+    public static long getRedstoneLinkNotifications() {
+        return redstoneLinkNotifications.get();
+    }
+
+    // --- Capability cache crash guard ---
+
+    public static boolean isCapabilityGuardEnabled() {
+        return masterPatchEnabled && capabilityGuardEnabled && CAPABILITY_GUARD_AVAILABLE;
+    }
+
+    public static boolean isCapabilityGuardAvailable() {
+        return CAPABILITY_GUARD_AVAILABLE;
+    }
+
+    public static boolean isCapabilityGuardConfiguredEnabled() {
+        return capabilityGuardEnabled;
+    }
+
+    public static void setCapabilityGuardEnabled(boolean enabled) {
+        capabilityGuardEnabled = enabled;
+        PatchConfigStore.saveFromRuntime();
+    }
+
+    public static long incrementCapabilityGuardCatches() {
+        return capabilityGuardCatches.incrementAndGet();
+    }
+
+    public static long getCapabilityGuardCatches() {
+        return capabilityGuardCatches.get();
+    }
+
     // --- Create Physical Items Fast Despawn ---
 
     public static boolean isCreatePhysicalItemsFastDespawnEnabled() {
@@ -526,6 +597,8 @@ public final class PatchRuntime {
         boolean itemDrainEnabled,
         boolean behaviourDispatch,
         boolean crafterSignal,
+        boolean redstoneLink,
+        boolean capabilityGuard,
         boolean createDropsEnabled,
         ThrottleMode throttleMode,
         int staticInterval,
@@ -539,6 +612,8 @@ public final class PatchRuntime {
         itemDrainPatchEnabled = itemDrainEnabled;
         behaviourDispatchEnabled = behaviourDispatch;
         crafterSignalEnabled = crafterSignal;
+        redstoneLinkEnabled = redstoneLink;
+        capabilityGuardEnabled = capabilityGuard;
         createPhysicalItemsFastDespawnEnabled = createDropsEnabled;
         globalThrottleMode = throttleMode;
         globalStaticInterval = clampInterval(staticInterval);

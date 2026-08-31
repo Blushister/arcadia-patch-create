@@ -23,13 +23,15 @@ public class ArcadiaPatchCreate {
         NeoForge.EVENT_BUS.addListener(ArcadiaPatchCreate::onEntityJoinLevel);
         LOGGER.info("[ArcadiaPatchCreate] Enabled validated Create performance patches.");
         LOGGER.info(
-            "[ArcadiaPatchCreate] Target availability: belt={}, fluid={}, createHeatJs={}, itemDrain={}, dispatch={}, crafter={}.",
+            "[ArcadiaPatchCreate] Target availability: belt={}, fluid={}, createHeatJs={}, itemDrain={}, dispatch={}, crafter={}, redstoneLink={}, capabilityGuard={}.",
             PatchRuntime.isBeltPatchAvailable(),
             PatchRuntime.isFluidPatchAvailable(),
             PatchRuntime.isHeatJsPatchAvailable(),
             PatchRuntime.isItemDrainPatchAvailable(),
             PatchRuntime.isBehaviourDispatchPatchAvailable(),
-            PatchRuntime.isCrafterSignalPatchAvailable()
+            PatchRuntime.isCrafterSignalPatchAvailable(),
+            PatchRuntime.isRedstoneLinkPatchAvailable(),
+            PatchRuntime.isCapabilityGuardAvailable()
         );
     }
 

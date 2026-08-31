@@ -84,6 +84,21 @@ public final class AdminDebugReporter {
         );
         sendLine(
             source,
+            "Redstone Link: configured=" + onOff(PatchRuntime.isRedstoneLinkPatchConfiguredEnabled())
+                + " available=" + yesNo(PatchRuntime.isRedstoneLinkPatchAvailable())
+                + " effective=" + onOff(PatchRuntime.isRedstoneLinkPatchEnabled())
+                + " skipped=" + compact(PatchRuntime.getRedstoneLinkSkips())
+                + " sent=" + compact(PatchRuntime.getRedstoneLinkNotifications())
+        );
+        sendLine(
+            source,
+            "Capability guard: configured=" + onOff(PatchRuntime.isCapabilityGuardConfiguredEnabled())
+                + " available=" + yesNo(PatchRuntime.isCapabilityGuardAvailable())
+                + " effective=" + onOff(PatchRuntime.isCapabilityGuardEnabled())
+                + " crashesPrevented=" + compact(PatchRuntime.getCapabilityGuardCatches())
+        );
+        sendLine(
+            source,
             "Create Drops: configured=" + onOff(PatchRuntime.isCreatePhysicalItemsFastDespawnConfiguredEnabled())
                 + " effective=" + onOff(PatchRuntime.isCreatePhysicalItemsFastDespawnEnabled())
                 + " delay=" + (PatchRuntime.getCreatePhysicalItemsDespawnTicks() / 20) + "s"

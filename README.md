@@ -19,7 +19,7 @@ Project links:
 | NeoForge | `21.1.221` |
 | Create | `6.0.10` |
 | Java | `21` |
-| Mod version | `1.4.4` |
+| Mod version | `1.4.5` |
 
 Server-side only. The admin panel uses a vanilla menu type, so it works in single player and on a dedicated server
 without any client-side installation.

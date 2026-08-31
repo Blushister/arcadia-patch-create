@@ -40,6 +40,12 @@ public final class ArcadiaMixinPlugin implements IMixinConfigPlugin {
         "com.simibubi.create.content.kinetics.crafter.MechanicalCrafterBlock";
     private static final String CRAFTER_BLOCK_ENTITY =
         "com.simibubi.create.content.kinetics.crafter.MechanicalCrafterBlockEntity";
+    private static final String REDSTONE_LINK_BLOCK =
+        "com.simibubi.create.content.redstone.link.RedstoneLinkBlock";
+    private static final String REDSTONE_LINK_BLOCK_ENTITY =
+        "com.simibubi.create.content.redstone.link.RedstoneLinkBlockEntity";
+    private static final String CAPABILITY_PROVIDER =
+        "com.simibubi.create.foundation.ICapabilityProvider$BlockCapabilityCacheProvider";
     private static final String SMART_BLOCK_ENTITY =
         "com.simibubi.create.foundation.blockEntity.SmartBlockEntity";
 
@@ -64,12 +70,23 @@ public final class ArcadiaMixinPlugin implements IMixinConfigPlugin {
         "4be7f4b26579904953e404257636dd85a3eecc2b8a01b6ff31afb490feb682eb";
     private static final String CRAFTER_BLOCK_ENTITY_6_0_10_SHA256 =
         "70f2a84a2223541342cc50ee28803fa24636d1f97027146eeb0e6002793e52f6";
+    private static final String REDSTONE_LINK_BLOCK_6_0_10_SHA256 =
+        "e6f761f516be32e05e429bcdc7b03b8c9931c762d289efafcac6e1abe43ca4f6";
+    private static final String REDSTONE_LINK_BLOCK_ENTITY_6_0_10_SHA256 =
+        "4b22e991c8c1c4bf091fee66fcf711890a1a5b30f65ebab08f816efb0600fd9b";
+    private static final String CAPABILITY_PROVIDER_6_0_10_SHA256 =
+        "83c5f5de93d2c2702f22f6f072dc9cf3ac7a705c12c34c1023224fe174e62bab";
     private static final String SMART_BLOCK_ENTITY_6_0_10_SHA256 =
         "6e5272cffba116187a6c37a36321e1e76e67bb206f8d8804d60f9a92ee1ef2f9";
 
     private static final Member GET_WORLD = new Member("getWorld", "()Lnet/minecraft/world/level/Level;");
     private static final Member GET_POS = new Member("getPos", "()Lnet/minecraft/core/BlockPos;");
     private static final Member TICK = new Member("tick", "()V");
+    private static final Member REDSTONE_LINK_TICK = new Member(
+        "tick",
+        "(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/server/level/ServerLevel;"
+            + "Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V"
+    );
     private static final Member CONTINUE_PROCESSING = new Member("continueProcessing", "()Z");
     private static final Member CAN_ITEM_BE_EMPTIED = new Member(
         "canItemBeEmptied",
@@ -127,6 +144,9 @@ public final class ArcadiaMixinPlugin implements IMixinConfigPlugin {
             case "MixinGenericItemEmptying", "MixinItemDrainBlockEntity" -> isItemDrainTargetCompatible();
             case "MixinHeatRecipeContext", "MixinRecipeManager" -> isHeatJsTargetCompatible();
             case "MixinSmartBlockEntity" -> isBehaviourDispatchTargetCompatible();
+            case "MixinCreateBlockCapabilityCacheProvider" -> isCapabilityGuardTargetCompatible();
+            case "MixinRedstoneLinkBlock", "MixinRedstoneLinkBlockEntityBridge" ->
+                isRedstoneLinkTargetCompatible();
             case "MixinMechanicalCrafterBlock", "MixinMechanicalCrafterBlockEntity" ->
                 isCrafterSignalTargetCompatible();
             default -> true;
@@ -182,6 +202,7 @@ public final class ArcadiaMixinPlugin implements IMixinConfigPlugin {
         return smart.hasFingerprint(SMART_BLOCK_ENTITY_6_0_10_SHA256)
             && behaviour.hasFingerprint(BLOCK_ENTITY_BEHAVIOUR_6_0_10_SHA256)
             && smart.hasField(new Member("behaviours", "Ljava/util/Map;"))
+            && smart.hasMethod(new Member("getAllBehaviours", "()Ljava/util/Collection;"))
             && smart.hasMethod(TICK)
             && smart.hasInvocation(TICK, new Invocation(
                 SMART_BLOCK_ENTITY, "forEachBehaviour", "(Ljava/util/function/Consumer;)V"))
@@ -207,6 +228,30 @@ public final class ArcadiaMixinPlugin implements IMixinConfigPlugin {
                 "(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;"
                     + "Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;"
                     + "Lnet/minecraft/core/BlockPos;Z)V"));
+    }
+
+    /**
+     * Skipping the notification is only sound while tick() still calls blockUpdated after
+     * recomputing the signal, and while the block entity still exposes the transmitted value.
+     * Both classes are fingerprinted and both anchors verified.
+     */
+    public static boolean isRedstoneLinkTargetCompatible() {
+        ClassShape block = shape(REDSTONE_LINK_BLOCK);
+        ClassShape entity = shape(REDSTONE_LINK_BLOCK_ENTITY);
+        return block.hasFingerprint(REDSTONE_LINK_BLOCK_6_0_10_SHA256)
+            && entity.hasFingerprint(REDSTONE_LINK_BLOCK_ENTITY_6_0_10_SHA256)
+            && entity.hasField(new Member("transmittedSignal", "I"))
+            && block.hasMethod(REDSTONE_LINK_TICK)
+            && block.hasInvocation(REDSTONE_LINK_TICK, new Invocation(
+                "net.minecraft.server.level.ServerLevel", "blockUpdated",
+                "(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;)V"));
+    }
+
+    /** Crash guard: only needs the method to exist, and the exact class it wraps. */
+    public static boolean isCapabilityGuardTargetCompatible() {
+        ClassShape provider = shape(CAPABILITY_PROVIDER);
+        return provider.hasFingerprint(CAPABILITY_PROVIDER_6_0_10_SHA256)
+            && provider.hasMethod(new Member("getCapability", "()Ljava/lang/Object;"));
     }
 
     private static boolean blockEntityBehaviourCompatible() {
