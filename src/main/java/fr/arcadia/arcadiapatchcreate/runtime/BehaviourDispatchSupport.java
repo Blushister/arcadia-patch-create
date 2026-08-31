@@ -2,7 +2,7 @@ package fr.arcadia.arcadiapatchcreate.runtime;
 
 import fr.arcadia.arcadiapatchcreate.ArcadiaPatchCreate;
 import fr.arcadia.arcadiapatchcreate.bridge.BlockEntityBehaviourBridge;
-import java.util.Map;
+import java.util.Collection;
 
 /**
  * Decides whether Create's behaviour collection can be ticked directly instead of
@@ -22,7 +22,7 @@ public final class BehaviourDispatchSupport {
     private BehaviourDispatchSupport() {
     }
 
-    public static boolean canDispatch(Map<?, ?> behaviours) {
+    public static boolean canDispatch(Collection<?> behaviours) {
         if (!PatchRuntime.isBehaviourDispatchPatchEnabled()) {
             return false;
         }
@@ -36,13 +36,13 @@ public final class BehaviourDispatchSupport {
         PatchRuntime.incrementBehaviourDispatches();
     }
 
-    private static synchronized void verifyBridge(Map<?, ?> behaviours) {
+    private static synchronized void verifyBridge(Collection<?> behaviours) {
         if (bridgeChecked) {
             return;
         }
         boolean usable = true;
         try {
-            for (Object behaviour : behaviours.values()) {
+            for (Object behaviour : behaviours) {
                 if (!(behaviour instanceof BlockEntityBehaviourBridge)) {
                     usable = false;
                     break;
