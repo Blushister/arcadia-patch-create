@@ -21,6 +21,7 @@ public class ArcadiaPatchCreate {
         PatchConfigStore.loadIntoRuntime();
         NeoForge.EVENT_BUS.addListener(ArcadiaPatchCommands::register);
         NeoForge.EVENT_BUS.addListener(ArcadiaPatchCreate::onEntityJoinLevel);
+        fr.arcadia.arcadiapatchcreate.diagnostic.DiagnosticEvents.register(modEventBus);
         LOGGER.info("[ArcadiaPatchCreate] Enabled validated Create performance patches.");
         LOGGER.info(
             "[ArcadiaPatchCreate] Target availability: belt={}, fluid={}, createHeatJs={}, itemDrain={}, dispatch={}, crafter={}, redstoneLink={}, capabilityGuard={}.",
